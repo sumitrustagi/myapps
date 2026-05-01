@@ -1,0 +1,9 @@
+# Multi-Platform Bulk Call Tester (Tkinter desktop GUI)
+# Note: Tkinter itself is provided by the system package `python3-tk`,
+# which the installer adds via apt. Do not install it via pip.
+msal>=1.28.0
+requests>=2.31.0
+openpyxl>=3.1.0
+# pyinstaller is only needed if you want to build a standalone binary;
+# the unified installer skips it. Uncomment if you build with `multi-caller --build`.
+# pyinstaller>=6.0.0

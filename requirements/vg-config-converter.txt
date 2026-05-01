@@ -1,0 +1,4 @@
+# VG Config Converter (Flask + openpyxl) — served via gunicorn
+Flask>=3.1.0
+gunicorn>=21.2.0
+openpyxl>=3.1.5

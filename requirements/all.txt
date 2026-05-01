@@ -1,0 +1,23 @@
+# Aggregated requirements for ALL Python components.
+# Use this only if you intend to run every Python component from a SINGLE shared venv.
+# The unified installer normally creates a dedicated venv per component (recommended).
+
+# ── crawlr ────────────────────────────────────────────────────────────────
+flask>=3.0.0
+gunicorn>=21.2.0
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=5.0.0
+apscheduler>=3.10.4
+playwright>=1.44.0
+pdfkit>=1.0.0
+yt-dlp>=2024.1.0
+
+# ── vg-config-converter ───────────────────────────────────────────────────
+# Flask is already pinned above; openpyxl pinned here.
+openpyxl>=3.1.5
+
+# ── multi-caller (Tkinter desktop GUI) ────────────────────────────────────
+# python3-tk must be installed via apt — not pip.
+msal>=1.28.0
+# requests already pinned above.
