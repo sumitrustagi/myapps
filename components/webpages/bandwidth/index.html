@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Network & Bandwidth Planner</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+:root{
+  --bg:#0A0F1E;--surf:#111827;--surf2:#1A2236;--surf3:#222E44;
+  --br:#2A3A56;--br2:#344562;
+  --blue:#00BCEB;--blue2:#0095C8;--bdim:#00BCEB22;--bdim2:#00BCEB11;
+  --green:#22C55E;--gdim:#22C55E18;
+  --amber:#F59E0B;--adim:#F59E0B18;
+  --red:#EF4444;--rdim:#EF444418;
+  --purple:#A78BFA;--pdim:#A78BFA18;
+  --teal:#14B8A6;--tdim:#14B8A618;
+  --text:#F1F5F9;--text2:#94A3B8;--text3:#64748B;--text4:#475569;
+  --r:8px;--rl:12px;--rxl:16px;
+  --shadow:0 1px 3px rgba(0,0,0,.4);
+  --shadow-md:0 4px 20px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
+h1,h2,h3,h4,h5{font-family:'Syne',sans-serif;line-height:1.25;}
+a{color:var(--blue);text-decoration:none;}a:hover{color:var(--blue2);}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--surf);}
+::-webkit-scrollbar-thumb{background:var(--br2);border-radius:99px;}
+/* ── TOPBAR ────────────────────────────────── */
+.topbar{background:var(--surf);border-bottom:1px solid var(--br);padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:var(--shadow-md);}
+.tb-l{display:flex;align-items:center;gap:12px;}
+.tb-badge{width:34px;height:34px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:9px;font-weight:500;color:#001A2E;letter-spacing:.4px;flex-shrink:0;}
+.tb-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text);}
+.tb-sub{font-size:10px;color:var(--text3);margin-top:1px;}
+.tb-nav{display:flex;gap:4px;align-items:center;}
+.tb-nav a{color:var(--text2);font-size:12px;padding:6px 12px;border-radius:6px;transition:all .15s;white-space:nowrap;}
+.tb-nav a:hover{background:var(--surf2);color:var(--text);}
+.tb-nav a.act{background:var(--bdim);color:var(--blue);border:1px solid var(--blue)33;}
+.tb-nav .home-link{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text3);padding:6px 10px;border-radius:6px;}
+.tb-nav .home-link:hover{background:var(--surf2);color:var(--text);}
+/* ── LAYOUT ────────────────────────────────── */
+.wrap{max-width:1240px;margin:0 auto;padding:28px 24px;}
+.layout{display:grid;grid-template-columns:264px 1fr;min-height:calc(100vh - 58px);}
+.sidebar{background:var(--surf);border-right:1px solid var(--br);padding:20px 16px;overflow-y:auto;max-height:calc(100vh - 58px);position:sticky;top:58px;}
+.main-area{padding:28px 32px;overflow-y:auto;}
+/* ── NAV ───────────────────────────────────── */
+.nav-section{margin-bottom:22px;}
+.nav-lbl{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;padding:0 8px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:12px;transition:all .12s;margin-bottom:2px;user-select:none;}
+.nav-item:hover{background:var(--surf2);color:var(--text);}
+.nav-item.act{background:var(--bdim);color:var(--blue);border:1px solid var(--blue)22;}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;}
+.nav-item.act .nav-dot{background:var(--blue);}
+.nav-cnt{margin-left:auto;background:var(--surf3);color:var(--text3);font-size:10px;font-family:'DM Mono',monospace;padding:1px 7px;border-radius:99px;}
+.nav-item.act .nav-cnt{background:var(--bdim);color:var(--blue);}
+/* ── CARDS ─────────────────────────────────── */
+.card{background:var(--surf);border:1px solid var(--br);border-radius:var(--rl);padding:20px;box-shadow:var(--shadow);}
+.card+.card{margin-top:14px;}
+.card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.cdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.card-sub{font-size:11px;color:var(--text3);margin-top:-10px;margin-bottom:14px;}
+/* ── GRIDS ─────────────────────────────────── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.full{grid-column:1/-1;}
+/* ── INPUTS ────────────────────────────────── */
+.field{margin-bottom:12px;}
+.field:last-child{margin-bottom:0;}
+label{display:block;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;}
+input[type=number],input[type=text],input[type=email],select,textarea{width:100%;background:var(--surf2);border:1.5px solid var(--br);border-radius:var(--r);padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);}
+select option{background:var(--surf2);}
+textarea{resize:vertical;font-family:'DM Mono',monospace;font-size:12px;line-height:1.5;}
+.help{font-size:10px;color:var(--text3);margin-top:3px;line-height:1.4;}
+/* ── BUTTONS ───────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--r);border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;transition:all .15s;white-space:nowrap;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-primary{background:var(--blue);color:#001A2E;}
+.btn-primary:hover{background:var(--blue2);color:#fff;}
+.btn-dark{background:var(--surf3);color:var(--text);border:1px solid var(--br2);}
+.btn-dark:hover{background:var(--br);color:var(--text);}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--br);}
+.btn-ghost:hover{background:var(--surf2);color:var(--text);border-color:var(--br2);}
+.btn-green{background:var(--gdim);color:var(--green);border:1px solid var(--green)33;}
+.btn-green:hover{background:var(--green)22;}
+.btn-sm{padding:5px 12px;font-size:11px;}
+/* ── INFO BOXES ────────────────────────────── */
+.ibox{background:var(--bdim);border-left:3px solid var(--blue);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.5;}
+.wbox{background:var(--adim);border-left:3px solid var(--amber);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--amber);line-height:1.5;}
+.gbox{background:var(--gdim);border-left:3px solid var(--green);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--green);line-height:1.5;}
+/* ── SECTION HEADER ────────────────────────── */
+.sec-hdr{margin-bottom:22px;}
+.sec-tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:99px;margin-bottom:7px;}
+.t-blue{background:var(--bdim);color:var(--blue);}
+.t-green{background:var(--gdim);color:var(--green);}
+.t-amber{background:var(--adim);color:var(--amber);}
+.t-red{background:var(--rdim);color:var(--red);}
+.t-purple{background:var(--pdim);color:var(--purple);}
+.t-teal{background:var(--tdim);color:var(--teal);}
+.sec-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.sec-desc{color:var(--text2);font-size:12px;line-height:1.6;max-width:720px;}
+/* ── METRICS ───────────────────────────────── */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0;}
+.metric{background:var(--surf2);border:1px solid var(--br);border-radius:var(--r);padding:14px;}
+.metric.hl{border-color:var(--blue)44;background:var(--bdim);}
+.m-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:5px;}
+.m-val{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--text);}
+.metric.hl .m-val{color:var(--blue);}
+.m-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+/* ── TABLES ────────────────────────────────── */
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{background:var(--surf3);color:var(--text2);font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:9px 12px;text-align:left;border-bottom:1px solid var(--br);}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--br);font-size:12px;color:var(--text2);}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--surf2);}
+.tbl .mono{font-family:'DM Mono',monospace;color:var(--text);}
+.tbl .hi{color:var(--blue);font-family:'DM Mono',monospace;}
+.tbl .ok{color:var(--green);font-family:'DM Mono',monospace;}
+/* ── BADGES ────────────────────────────────── */
+.badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;letter-spacing:.3px;}
+.b-req{background:var(--rdim);color:var(--red);}
+.b-inc{background:var(--gdim);color:var(--green);}
+.b-opt{background:var(--adim);color:var(--amber);}
+.b-na{background:var(--surf3);color:var(--text3);}
+/* ── TOGGLE ────────────────────────────────── */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--br);}
+.toggle-row:last-child{border-bottom:none;}
+.tgl-lbl{font-size:12px;color:var(--text2);}
+.tgl-sub{font-size:10px;color:var(--text3);margin-top:1px;}
+.switch{position:relative;width:36px;height:20px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;background:var(--surf3);border:1px solid var(--br2);border-radius:99px;transition:.2s;cursor:pointer;}
+.slider::before{content:'';position:absolute;width:14px;height:14px;left:2px;top:2px;background:var(--text3);border-radius:50%;transition:.2s;}
+.switch input:checked+.slider{background:var(--bdim);border-color:var(--blue);}
+.switch input:checked+.slider::before{background:var(--blue);transform:translateX(16px);}
+/* ── PRICE ROW ─────────────────────────────── */
+.price-row{display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:end;}
+.pfx{position:relative;}
+.pfx input{padding-left:24px;}
+.pfx::before{content:'$';position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:12px;z-index:1;}
+/* ── DIVIDER ───────────────────────────────── */
+hr.div{border:none;border-top:1px solid var(--br);margin:16px 0;}
+/* ── SUB-SECTION ───────────────────────────── */
+.sub-sec{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text2);margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--br);text-transform:uppercase;letter-spacing:.6px;}
+/* ── CODE OUTPUT ───────────────────────────── */
+.code-out{background:#060B14;border:1px solid var(--br);border-radius:var(--r);padding:16px;font-family:'DM Mono',monospace;font-size:12px;color:#A5F3FC;line-height:1.7;white-space:pre-wrap;overflow-x:auto;max-height:500px;overflow-y:auto;}
+.code-out .c-cmd{color:#FDE68A;}
+.code-out .c-comment{color:#6B7280;}
+.code-out .c-string{color:#86EFAC;}
+.code-out .c-num{color:#F9A8D4;}
+/* ── SIDEBAR TOTAL ─────────────────────────── */
+.sb-total{background:var(--surf2);border:1px solid var(--br);border-radius:var(--rl);padding:16px;margin-top:20px;}
+.sb-total-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:8px;}
+.sb-total-val{font-family:'DM Mono',monospace;font-size:24px;font-weight:500;color:var(--blue);}
+.sb-total-sub{font-size:10px;color:var(--text3);margin-top:3px;}
+/* ── FOOTER ────────────────────────────────── */
+.footer{background:var(--surf);border-top:1px solid var(--br);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text3);}
+.footer-brand{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--blue);}
+.footer-author{color:var(--text3);}
+.footer-author strong{color:var(--text2);}
+/* ── OPTION CARDS ──────────────────────────── */
+.opt-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:16px;}
+.opt-card{background:var(--surf2);border:2px solid var(--br);border-radius:var(--rl);padding:14px;cursor:pointer;transition:all .15s;text-align:center;}
+.opt-card:hover{border-color:var(--br2);background:var(--surf3);}
+.opt-card.sel{border-color:var(--blue);background:var(--bdim);}
+.opt-card-icon{font-size:24px;margin-bottom:6px;}
+.opt-card-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.opt-card-sub{font-size:10px;color:var(--text3);}
+.opt-card.sel .opt-card-title{color:var(--blue);}
+/* ── TOTALS FOOTER BLOCK ───────────────────── */
+.totals-blk{background:var(--surf);border:1px solid var(--br);border-top:2px solid var(--blue);border-radius:var(--rl);padding:20px 24px;margin-top:20px;}
+.tot-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--br);}
+.tot-row:last-child{border-bottom:none;padding-top:12px;margin-top:4px;}
+.tot-lbl{font-size:12px;color:var(--text2);}
+.tot-val{font-family:'DM Mono',monospace;font-size:13px;color:var(--blue);}
+.tot-row.grand .tot-lbl{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text);}
+.tot-row.grand .tot-val{font-size:20px;color:var(--green);}
+/* ── SECTION VISIBILITY ────────────────────── */
+.section{display:none;}
+.section.act{display:block;}
+/* ── PRINT ─────────────────────────────────── */
+@media print{
+  .topbar .btn,.sidebar,#pdf-btn,#reset-btn{display:none!important;}
+  .layout{display:block;}
+  .main-area{padding:0;}
+  .section{display:block!important;}
+  body,html{background:#fff;color:#000;}
+  .card{background:#f9f9f9;border:1px solid #ddd;box-shadow:none;}
+  .metric{background:#f0f8ff;}
+  .tbl th{background:#003A5D;color:#fff;}
+  .sec-title{color:#003A5D;}
+  .code-out{background:#f0f0f0;color:#003A5D;}
+  @page{margin:15mm;size:A4;}
+}
+
+.dep-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:20px;}
+.dep-card{background:var(--surf2);border:2px solid var(--br);border-radius:var(--rl);padding:16px 10px;cursor:pointer;transition:all .15s;text-align:center;user-select:none;}
+.dep-card:hover{border-color:var(--br2);}
+.dep-card.sel{border-color:var(--blue);background:var(--bdim);}
+.dep-card-i{font-size:26px;margin-bottom:6px;}
+.dep-card-t{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text);}
+.dep-card-s{font-size:10px;color:var(--text3);margin-top:3px;line-height:1.3;}
+.dep-card.sel .dep-card-t{color:var(--blue);}
+.site-row{background:var(--surf2);border:1px solid var(--br);border-radius:var(--r);padding:14px;margin-bottom:10px;}
+.site-row-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.bar-bg{background:var(--surf3);border-radius:99px;height:8px;overflow:hidden;margin-top:5px;}
+.bar-fill{height:100%;border-radius:99px;background:var(--blue);transition:width .3s;}
+.bar-fill.warn{background:var(--amber);}
+.bar-fill.err{background:var(--red);}
+.rec-box{background:var(--surf2);border:1px solid var(--br);border-radius:var(--r);padding:14px;margin-top:12px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tb-l">
+    <div class="tb-badge">BW</div>
+    <div><div class="tb-title">Network & Bandwidth Planner</div><div class="tb-sub">Select UC deployment type · Voice + Video + Webex Meetings · Auto-populated best practices</div></div>
+  </div>
+  <div class="tb-nav"><a href="index.html">⌂ Home</a><a href="hld_generator.html">HLD Generator</a><a href="license_calc.html">License Calculator</a><a href="bandwidth.html" class="act">Network Planner</a><a href="vg_config.html">VG Config Gen</a></div>
+</div>
+
+<div class="wrap">
+<div class="sec-hdr" style="text-align:center;max-width:100%;">
+  <span class="sec-tag t-teal" style="margin:0 auto 8px;">Network & Bandwidth Planner</span>
+  <h2 class="sec-title" style="font-size:28px;">Cisco UC Network & Bandwidth Planner</h2>
+  <p class="sec-desc" style="margin:0 auto 24px;text-align:center;">Select your UC deployment type — fields auto-populate with Cisco best-practice values. Video and Webex Meetings are optional sections.</p>
+</div>
+
+<div class="dep-grid">
+  <div class="dep-card" onclick="setDep('MT',this)"><div class="dep-card-i">☁️</div><div class="dep-card-t">Webex MT</div><div class="dep-card-s">Multi-Tenant<br>Cloud only</div></div>
+  <div class="dep-card" onclick="setDep('DI',this)"><div class="dep-card-i">🏢</div><div class="dep-card-t">Webex DI</div><div class="dep-card-s">Dedicated Instance<br>CUCM in Equinix</div></div>
+  <div class="dep-card" onclick="setDep('MTH',this)"><div class="dep-card-i">🔀</div><div class="dep-card-t">MT + On-Prem</div><div class="dep-card-s">Hybrid MT<br>LGW + CUCM</div></div>
+  <div class="dep-card" onclick="setDep('DIH',this)"><div class="dep-card-i">🔗</div><div class="dep-card-t">DI + On-Prem</div><div class="dep-card-s">Hybrid DI<br>LGW + CUCM</div></div>
+  <div class="dep-card" onclick="setDep('CUCM',this)"><div class="dep-card-i">🖥️</div><div class="dep-card-t">CUCM Only</div><div class="dep-card-s">On-premises<br>No Webex cloud</div></div>
+</div>
+
+<div id="dep-info" class="ibox" style="margin-bottom:20px;">Select a deployment type above to auto-populate best-practice values.</div>
+
+<div class="g2" style="align-items:start;">
+  <div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--blue)"></span>Organisation & Voice</div>
+      <div class="g2" style="gap:10px;">
+        <div class="field"><label>Organisation Name</label><input type="text" id="org" placeholder="Customer name"/></div>
+        <div class="field"><label>Total Users (org-wide)</label><input type="number" id="total-users" value="500" min="1" oninput="calc()"/></div>
+        <div class="field"><label>Voice Codec</label>
+          <select id="codec" onchange="calc()">
+            <option value="87">G.711 — 87 kbps (LAN / campus)</option>
+            <option value="87">G.722 — 87 kbps (HD wideband)</option>
+            <option value="24">G.729 — 24 kbps (WAN constrained)</option>
+            <option value="50">Opus — 50 kbps (Webex adaptive)</option>
+            <option value="16">iLBC — 16 kbps (low BW)</option>
+          </select></div>
+        <div class="field"><label>Peak Concurrent Call %</label>
+          <select id="conc-pct" onchange="calc()">
+            <option value="0.10">10% — light usage</option>
+            <option value="0.12">12%</option>
+            <option value="0.15" selected>15% — standard (recommended)</option>
+            <option value="0.20">20% — heavy / call centre</option>
+            <option value="0.25">25% — trading floor</option>
+          </select></div>
+        <div class="field"><label>RTP Header Overhead</label>
+          <select id="overhead" onchange="calc()">
+            <option value="1.18">UDP (standard) — +18%</option>
+            <option value="1.22">UDP + L2 headers — +22%</option>
+            <option value="1.10">SRTP (Webex) — +10%</option>
+          </select></div>
+        <div class="field"><label>Bandwidth Headroom %</label>
+          <select id="bw-hd" onchange="calc()">
+            <option value="1.10">10%</option>
+            <option value="1.15">15%</option>
+            <option value="1.20">20%</option>
+            <option value="1.25" selected>25% (recommended)</option>
+            <option value="1.30">30%</option>
+          </select></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <div class="card-title"><span class="cdot" style="background:var(--blue)"></span>Firewall & Network Best Practices</div>
+      <div id="bp-fields">
+        <div class="field"><label>SIP ALG Status</label>
+          <select id="bp-alg" onchange="calc()">
+            <option>Disabled (required — Webex breaks with SIP ALG enabled)</option>
+            <option>Enabled — must be disabled before go-live</option>
+          </select></div>
+        <div class="field"><label>NAT Type</label>
+          <select id="bp-nat" onchange="calc()">
+            <option>PAT / Overloaded NAT (standard for endpoints)</option>
+            <option>Static 1:1 NAT (preferred for cert-based LGW)</option>
+            <option>No NAT (direct IP — data centre)</option>
+          </select></div>
+        <div class="field"><label>DSCP Marking for Voice</label>
+          <select id="bp-dscp" onchange="calc()">
+            <option>EF (0x2E / DSCP 46) — Priority Queue (recommended)</option>
+            <option>CS3 (0x18 / DSCP 24) — Signalling Queue</option>
+            <option>None — best effort</option>
+          </select></div>
+        <div class="field"><label>Webex Media UDP Port Range</label>
+          <select id="bp-ports" onchange="calc()">
+            <option>19560–65535 (Webex endpoints — standard)</option>
+            <option>8000–48198 (CUBE LGW configurable range)</option>
+            <option>9000, 5004 (fallback / STUN/ICE)</option>
+          </select></div>
+        <div class="field"><label>VPN Split Tunnelling</label>
+          <select id="bp-vpn" onchange="calc()">
+            <option>Webex traffic bypasses VPN (recommended)</option>
+            <option>Full tunnel — performance degraded</option>
+            <option>No VPN in use</option>
+          </select></div>
+        <div class="field"><label>QoS Implementation</label>
+          <select id="bp-qos" onchange="calc()">
+            <option>End-to-end DSCP (recommended)</option>
+            <option>WAN only (LAN best-effort)</option>
+            <option>SD-WAN managed policies</option>
+            <option>Not implemented</option>
+          </select></div>
+        <div class="field"><label>Internet Breakout</label>
+          <select id="bp-breakout" onchange="calc()">
+            <option>Local breakout per site (recommended — lowest latency)</option>
+            <option>Centralised backhaul via HQ (not recommended for Webex)</option>
+            <option>SD-WAN media steering</option>
+          </select></div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--purple)"></span>Video (Optional)</div>
+      <div class="toggle-row" style="margin-bottom:10px;">
+        <div><div class="tgl-lbl">Include Video bandwidth</div><div class="tgl-sub">Webex App video, Cisco Room/Board devices</div></div>
+        <label class="switch"><input type="checkbox" id="vid-en" onchange="toggleVid();calc()"/><span class="slider"></span></label>
+      </div>
+      <div id="vid-sec" style="display:none;">
+        <div class="field"><label>Concurrent Video Sessions</label><input type="number" id="vid-users" value="0" min="0" oninput="calc()"/><div class="help">Number of simultaneous video calls at peak.</div></div>
+        <div class="field"><label>Video Quality</label>
+          <select id="vid-qual" onchange="calc()">
+            <option value="512">360p — 512 kbps (branch / constrained WAN)</option>
+            <option value="1000" selected>720p HD — 1 Mbps (standard)</option>
+            <option value="1500">1080p FHD — 1.5 Mbps (executive)</option>
+            <option value="4000">4K — 4 Mbps (TelePresence / high-end)</option>
+          </select></div>
+        <div class="field"><label>Video Device Type</label>
+          <select id="vid-type" onchange="calc()">
+            <option>Webex App (desktop/mobile) — standard</option>
+            <option>Cisco Desk Pro / Board — premium</option>
+            <option>Cisco Room Kit / TelePresence — immersive</option>
+          </select></div>
+        <div class="field"><label>DSCP for Video</label>
+          <select id="vid-dscp" onchange="calc()">
+            <option>AF41 (0x22 / DSCP 34) — Bandwidth Queue (recommended)</option>
+            <option>CS3 — Signalling Queue</option>
+            <option>Best effort</option>
+          </select></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <div class="card-title"><span class="cdot" style="background:var(--purple)"></span>Webex Meetings (Optional)</div>
+      <div class="toggle-row" style="margin-bottom:10px;">
+        <div><div class="tgl-lbl">Include Webex Meetings bandwidth</div><div class="tgl-sub">Active participant streaming requirements</div></div>
+        <label class="switch"><input type="checkbox" id="meet-en" onchange="toggleMeet();calc()"/><span class="slider"></span></label>
+      </div>
+      <div id="meet-sec" style="display:none;">
+        <div class="field"><label>Concurrent Active Meeting Users (video on)</label><input type="number" id="meet-users" value="0" min="0" oninput="calc()"/><div class="help">Number of users with video ON simultaneously in meetings.</div></div>
+        <div class="field"><label>Meeting Quality</label>
+          <select id="meet-qual" onchange="calc()">
+            <option value="500">Audio only — 500 kbps</option>
+            <option value="1000" selected>720p HD video — 1 Mbps per user</option>
+            <option value="1500">1080p FHD — 1.5 Mbps per user</option>
+            <option value="2000">HD + screen share — 2 Mbps per user</option>
+          </select></div>
+        <div class="field"><label>Webex Meetings License Type</label>
+          <select id="meet-lic" onchange="calc()">
+            <option>Included in Webex Suite (recommended)</option>
+            <option>Webex Meetings Pro (add-on)</option>
+            <option>Webex Events / Webinars (large audience)</option>
+          </select></div>
+        <div class="ibox">Webex Meetings best practice: local internet breakout required. Do NOT backhaul Meetings traffic via centralised gateway — adds 50–150ms latency and degrades quality.</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:12px;">
+      <div class="card-title"><span class="cdot" style="background:var(--green)"></span>Per-Site Breakdown</div>
+      <div class="ibox">Add individual sites for per-site bandwidth calculation. Different sites may have different user counts and bandwidth available.</div>
+      <div id="sites-con"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addBWSite()" style="margin-top:8px;">+ Add Site</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="card" style="margin-top:20px;">
+  <div class="card-title"><span class="cdot" style="background:var(--green)"></span>Bandwidth Summary</div>
+  <div class="mgrid">
+    <div class="metric hl"><div class="m-label">Voice Bandwidth</div><div class="m-val" id="r-voice">0 kbps</div><div class="m-sub" id="r-voice-conc"></div></div>
+    <div class="metric"><div class="m-label">Video Bandwidth</div><div class="m-val" id="r-video">—</div></div>
+    <div class="metric"><div class="m-label">Meetings Bandwidth</div><div class="m-val" id="r-meet">—</div></div>
+    <div class="metric hl"><div class="m-label">Total Required</div><div class="m-val" id="r-total">0 kbps</div><div class="m-sub" id="r-total-mb"></div></div>
+    <div class="metric"><div class="m-label">Concurrent Voice Calls</div><div class="m-val" id="r-conc">0</div><div class="m-sub">+20% burst ceiling</div></div>
+    <div class="metric"><div class="m-label">LGW Recommendation</div><div class="m-val" id="r-lgw" style="font-size:13px;">—</div></div>
+  </div>
+
+  <!-- Firewall Port Matrix -->
+  <div class="sub-sec" style="margin-top:20px;">Webex Calling — Standard Firewall Port Matrix (Auto-populated by deployment type)</div>
+  <div style="overflow-x:auto;">
+    <table class="tbl" id="port-table">
+      <thead><tr><th>Source</th><th>Destination</th><th>Protocol</th><th>Port(s)</th><th>Purpose</th><th>Required?</th></tr></thead>
+      <tbody id="port-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- Best Practice Recommendations -->
+  <div class="sub-sec" style="margin-top:20px;">Design Recommendations</div>
+  <div id="recs" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+</div>
+
+<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:20px;">
+  <button class="btn btn-ghost" onclick="window.print()">⎙ Print / PDF</button>
+  <button class="btn btn-primary" onclick="exportBW()">⬇ Export Report</button>
+</div>
+</div>
+
+
+<footer class="footer">
+  <div>
+    <span class="footer-brand">Cisco UC &amp; Webex Suite</span>
+    <span style="color:var(--br2);margin:0 8px;">·</span>
+    <span>Licensing · HLD · Network Planning · Configuration</span>
+  </div>
+  <div class="footer-author">Designed &amp; developed by <strong>Sumit Rustagi</strong></div>
+</footer>
+
+<script>
+var depType='';var bwSiteC=0;
+
+var DEPS={
+  MT:{label:'Webex Calling Multi-Tenant (MT)',info:'Cloud-first. All endpoints register to Webex Cloud. SIP ALG must be disabled. UDP 19560-65535 for SRTP media. Local internet breakout strongly recommended.',codec:50,pct:0.15,hd:1.25,ports:[
+    ['Endpoints','*.webex.com','TCP/HTTPS','443','Signalling, provisioning, WSS','Required'],
+    ['Endpoints','Webex Media Nodes','UDP','19560–65535','SRTP voice/video media (primary)','Required'],
+    ['Endpoints','Webex Media Nodes','UDP/TCP','9000, 5004','SRTP fallback / STUN/ICE','Required'],
+    ['Endpoints','NTP server','UDP','123','Time synchronisation','Required'],
+    ['Endpoints','DNS server','UDP/TCP','53','DNS resolution','Required'],
+    ['Cisco MPP Phones','*.webex.com','TCP/TLS','5061','SIP-TLS registration','Required'],
+  ],recs:['Disable SIP ALG on all firewalls and NAT devices — Webex breaks with SIP ALG enabled','Allow UDP 19560–65535 outbound to Webex Media Node IPs — do NOT filter by IP (dynamic)','Implement local internet breakout per site — backhauling via HQ adds 50–150ms latency','Enable DSCP marking: EF (DSCP 46) for voice, AF41 for video, CS3 for SIP signalling','Configure split tunnelling on corporate VPN to exclude *.webex.com traffic','Ensure NTP synchronisation (UDP 123) — Webex TLS handshakes fail with >2 min clock skew','MTU: maintain 1500 bytes — set DF bit for ICMP path MTU discovery']},
+  DI:{label:'Webex Calling Dedicated Instance (DI)',info:'Cisco-hosted CUCM in Equinix. Endpoints register to DI CUCM. Expressway C+E required for MRA. Webex App uses SIP OAuth (port 5090). Cisco IP phones use SCCP over TLS (port 2443).',codec:87,pct:0.15,hd:1.25,ports:[
+    ['Endpoints','DI CUCM (Equinix)','TCP/TLS','5090','SIP OAuth — Webex App / Jabber','Required'],
+    ['Cisco IP Phones','DI CUCM (Equinix)','TCP/TLS','2443','SCCP over TLS (mixed mode)','Required'],
+    ['Endpoints','DI CUCM','UDP','16384–32767','RTP media (DI internal)','Required'],
+    ['Remote (MRA)','Expressway-E','TCP/TLS','8443','MRA HTTPS/CONNECT traversal','If MRA'],
+    ['Remote (MRA)','Expressway-E','TCP/TLS','5061','MRA SIP TLS','If MRA'],
+    ['Remote (MRA)','Expressway-E','UDP','36002–59999','MRA media relay','If MRA'],
+    ['Dir Connector','Webex Cloud','TCP/HTTPS','443','AD sync to Webex Identity','Required'],
+  ],recs:['Mixed mode on DI CUCM encrypts SIP and RTP — SRTP required end-to-end','CAPF/LSC certificate issuance required for Cisco IP phones (hardware) in mixed mode','SIP OAuth (no LSC/CAPF needed) for Webex App and Jabber from CUCM 12.5(1)+','Expressway-E must have a public CA-signed certificate for MRA — self-signed NOT supported','DHCP option 150 / option 66 to point phones to TFTP on DI CUCM','Ensure DNS SRV records (_cisco-uds._tcp) resolve correctly for DI cluster','Expressway cluster minimum: 2 Exp-E + 2 Exp-C for HA']},
+  MTH:{label:'MT + On-Premises CUCM (Hybrid)',info:'Webex MT users register to cloud. CUCM users remain on-prem. LGW (CUBE) bridges both. SIP-TLS or mTLS trunk between LGW and Webex. Internal calls do NOT consume Route List license.',codec:87,pct:0.15,hd:1.25,ports:[
+    ['Endpoints','*.webex.com','TCP/HTTPS','443','Webex MT signalling','Required'],
+    ['Endpoints','Webex Media Nodes','UDP','19560–65535','Webex SRTP media','Required'],
+    ['LGW (reg-based)','*.bcld.webex.com','TCP/TLS','5061','SIP-TLS trunk (registration-based LGW)','If reg-based'],
+    ['LGW (cert-based)','Webex Access SBC','TCP/mTLS','5061','mTLS trunk (certificate-based LGW)','If cert-based'],
+    ['Webex SBC','LGW (cert-based)','TCP/mTLS','5061','Inbound mTLS — LGW must be publicly reachable','If cert-based'],
+    ['LGW','Webex Media Nodes','UDP','8000–48198','LGW SRTP media to Webex','Required'],
+    ['CUCM','LGW','TCP','5060','Internal SIP trunk CUCM ↔ LGW','Required'],
+    ['LGW','PSTN SIP Trunk','TCP/TLS','5060/5061','LGW to PSTN carrier','If LGW PSTN'],
+  ],recs:['Certificate-based LGW trunk recommended for >250 concurrent calls — use IOS-XE 17.9.1a+','LGW must present a CA-signed certificate from a Cisco-trusted public CA (cert-based trunk)','NAT timeout: minimum 30 minutes for SIP connections — short timeouts cause call drops','Dual LGW with DNS SRV load-balancing recommended for production — avoid single point of failure','SRST configuration on LGW provides emergency fallback if Webex cloud is unreachable','On-net calls (Webex ↔ CUCM) do NOT consume Route List license — only PSTN calls do','Translation patterns on CUCM to normalise caller ID to +E.164 before sending to LGW']},
+  DIH:{label:'DI + On-Premises CUCM (Hybrid DI)',info:'Primary cluster in Dedicated Instance. Legacy CUCM clusters on-prem. LGW interconnects DI and on-prem. Enhanced Survivability on LGW provides CUCM features when DI unreachable.',codec:87,pct:0.15,hd:1.25,ports:[
+    ['DI Endpoints','DI CUCM (Equinix)','TCP/TLS','5090','SIP OAuth — Webex App','Required'],
+    ['DI IP Phones','DI CUCM','TCP/TLS','2443','SCCP over TLS','Required'],
+    ['On-prem CUCM','LGW','TCP','5060','Internal SIP trunk — on-prem to LGW','Required'],
+    ['LGW','DI CUCM (Equinix)','TCP/TLS','5061','SIP-TLS trunk LGW to DI','Required'],
+    ['Remote (MRA)','Expressway-E','TCP/TLS','8443','MRA for remote DI users','If MRA'],
+    ['LGW','Webex Media Nodes','UDP','8000–48198','LGW SRTP media','Required'],
+    ['LGW','PSTN Carrier','TCP/TLS','5060/5061','PSTN SIP trunk','If on-prem PSTN'],
+  ],recs:['Enhanced Survivability on LGW requires DNA Advantage license on C8200/C8300','SME (Session Management Edition) recommended if more than 2 legacy CUCM leaf clusters','Route List Calls license is INCLUDED in DI subscription — no extra charge for PSTN trunking','Dial plan ownership: DI CUCM owns primary dial plan — on-prem clusters use route to DI','CUBE session licenses: each call DI ↔ on-prem consumes 1 session on each CUBE in path','Expressway version X14.3+ recommended for DI compatibility','Mixed mode on DI CUCM encrypts all media — ensure all devices support SRTP']},
+  CUCM:{label:'Cisco CUCM On-Premises Only',info:'All on-premises CUCM deployment. No Webex cloud integration. Standard CUCM/CUBE design principles apply. SIP ALG must still be disabled if endpoints traverse NAT.',codec:87,pct:0.15,hd:1.25,ports:[
+    ['Cisco IP Phones','CUCM','TCP/TLS','2443','SCCP over TLS (mixed mode)','If encrypted'],
+    ['Cisco IP Phones','CUCM','TCP','2000','SCCP (unencrypted)','If not encrypted'],
+    ['Jabber/Webex App','CUCM','TCP/TLS','5090','SIP OAuth (CUCM 12.5+)','If SIP OAuth'],
+    ['CUCM','SIP Trunk/CUBE','TCP','5060','CUCM to CUBE SIP trunk','Required'],
+    ['CUBE','PSTN Provider','TCP/TLS','5060/5061','CUBE to PSTN SIP trunk','Required'],
+    ['CUBE','CUCM','UDP','16384–32767','RTP media (internal)','Required'],
+    ['Jabber/Webex App','Expressway-E','TCP/TLS','8443','MRA for remote users','If MRA'],
+  ],recs:['Enable Mixed Mode on CUCM for SRTP — requires CTL file or TokenlessSSL','SIP OAuth on CUCM 12.5+ eliminates need for LSC/CAPF for Webex App and Jabber','PVDM4 DSP module required on CUBE for TDM (PRI/ISDN) support','CUCM redundancy: Publisher + at least 1 Subscriber per cluster for HA','UCL Enhanced minimum for dual-device users (desk phone + softclient) — Standard does not cover this','CUWL Professional includes Unity Connection and Webex Meetings — best value for full UC users','CAC (Call Admission Control) required between sites to prevent bandwidth oversubscription']},
+};
+
+function setDep(dep, el){
+  depType=dep;
+  document.querySelectorAll('.dep-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  var d=DEPS[dep];
+  document.getElementById('dep-info').textContent=d.info;
+  document.getElementById('codec').selectedIndex=['G.711 (87 kbps)','G.722 (87 kbps)','G.729 (24 kbps)','Opus (50 kbps)'].findIndex(c=>c.includes(d.codec===87?'G.711':d.codec===24?'G.729':'Opus'));
+  document.getElementById('codec').value=document.getElementById('codec').options[Math.max(0,document.getElementById('codec').selectedIndex)].value;
+  document.querySelectorAll('#conc-pct option').forEach(o=>{if(parseFloat(o.value)===d.pct)o.selected=true;});
+  calc();
+}
+
+function toggleVid(){var en=document.getElementById('vid-en').checked;document.getElementById('vid-sec').style.display=en?'block':'none';}
+function toggleMeet(){var en=document.getElementById('meet-en').checked;document.getElementById('meet-sec').style.display=en?'block':'none';}
+
+function n(id){return parseFloat(document.getElementById(id)?.value)||0;}
+function sv(id){return document.getElementById(id)?.value||'';}
+function set(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+
+function calc(){
+  var codec=parseInt(sv('codec'))||87;
+  var pct=parseFloat(sv('conc-pct'))||0.15;
+  var hd=parseFloat(sv('bw-hd'))||1.25;
+  var ovhd=parseFloat(sv('overhead'))||1.18;
+  var users=n('total-users');
+  var conc=Math.ceil(users*pct);
+  var burst=Math.ceil(conc*1.2);
+  var voice=Math.ceil(conc*codec*ovhd*hd);
+
+  var vidEn=document.getElementById('vid-en').checked;
+  var vidUsers=n('vid-users');
+  var vidBW=parseInt(sv('vid-qual'))||1000;
+  var video=vidEn?Math.ceil(vidUsers*vidBW*hd):0;
+
+  var meetEn=document.getElementById('meet-en').checked;
+  var meetUsers=n('meet-users');
+  var meetBW=parseInt(sv('meet-qual'))||1000;
+  var meet=meetEn?Math.ceil(meetUsers*meetBW*hd):0;
+
+  var total=voice+(vidEn?video:0)+(meetEn?meet:0);
+
+  set('r-voice',voice.toLocaleString()+' kbps');
+  set('r-voice-conc',conc+' calls · burst '+burst);
+  set('r-video',vidEn?video.toLocaleString()+' kbps':'—');
+  set('r-meet',meetEn?meet.toLocaleString()+' kbps':'—');
+  set('r-total',total.toLocaleString()+' kbps');
+  set('r-total-mb','(~'+Math.ceil(total/1000)+' Mbps)');
+  set('r-conc',conc+' (burst: '+burst+')');
+
+  // LGW recommendation
+  var lgw=conc<=250?'ISR 4321 / C8200':conc<=500?'ISR 4331 / C8200':conc<=2000?'ISR 4431 / C8300':conc<=6500?'ISR 4451 / C8500':'C8500 / vCUBE cluster';
+  set('r-lgw',lgw);
+
+  // Port table
+  var tbody=document.getElementById('port-tbody');
+  if(tbody&&depType){
+    var d=DEPS[depType];
+    tbody.innerHTML=d.ports.map(r=>'<tr><td>'+r[0]+'</td><td class="mono">'+r[1]+'</td><td>'+r[2]+'</td><td class="mono">'+r[3]+'</td><td>'+r[4]+'</td><td><span class="badge '+(r[5]==='Required'?'b-req':'b-opt')+'">'+r[5]+'</span></td></tr>').join('');
+    // Recs
+    var recsEl=document.getElementById('recs');
+    recsEl.innerHTML=d.recs.map(r=>'<div class="gbox" style="margin:0;">✓ '+r+'</div>').join('');
+  }
+
+  // Per-site
+  document.querySelectorAll('.site-bw-display').forEach(el=>{
+    var su=parseInt(el.dataset.users)||0;
+    var sconc=Math.ceil(su*pct);
+    var sbw=Math.ceil(sconc*codec*ovhd*hd);
+    var savail=parseInt(el.dataset.avail)||100000;
+    var pctUsed=Math.min(100,Math.round(sbw/savail*100));
+    el.innerHTML='<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:3px;"><span>'+sbw.toLocaleString()+' kbps required</span><span>'+pctUsed+'% of '+Math.round(savail/1000)+'Mbps</span></div>'+
+      '<div class="bar-bg"><div class="bar-fill'+(pctUsed>85?' err':pctUsed>60?' warn':'')+'" style="width:'+pctUsed+'%"></div></div>'+
+      (pctUsed>85?'<div style="font-size:10px;color:var(--red);margin-top:4px;">⚠ Bandwidth may be insufficient</div>':
+       pctUsed>60?'<div style="font-size:10px;color:var(--amber);margin-top:4px;">Moderate utilisation — monitor closely</div>':'');
+  });
+}
+
+function addBWSite(){
+  bwSiteC++;
+  var c=document.getElementById('sites-con');
+  var d=document.createElement('div');d.className='site-row';
+  d.innerHTML='<div class="site-row-hdr"><b style="font-size:12px;color:var(--text)">Site '+bwSiteC+'</b><button class="btn btn-ghost btn-sm" onclick="this.closest(\'.site-row\').remove();calc()">Remove</button></div>'+
+  '<div class="g3" style="gap:8px;">'+
+  '<div class="field"><label>Site Name</label><input type="text" placeholder="e.g. HQ London"/></div>'+
+  '<div class="field"><label>Users at this site</label><input type="number" value="100" min="1" data-site-users="1" oninput="this.closest(\'.site-row\').querySelector(\'.site-bw-display\').dataset.users=this.value;calc()"/></div>'+
+  '<div class="field"><label>Available Internet BW (Mbps)</label><input type="number" value="100" min="1" data-site-avail="1" oninput="this.closest(\'.site-row\').querySelector(\'.site-bw-display\').dataset.avail=this.value*1000;calc()"/></div>'+
+  '</div><div class="site-bw-display" data-users="100" data-avail="100000" style="margin-top:6px;"></div>';
+  c.appendChild(d);calc();
+}
+
+function exportBW(){
+  var lines=['=== CISCO UC NETWORK & BANDWIDTH PLANNER REPORT ===','Generated: '+new Date().toLocaleString(),'Organisation: '+(document.getElementById('org').value||'—'),'Deployment: '+(depType?DEPS[depType].label:'Not selected'),'','--- INPUTS ---','Total Users: '+n('total-users'),'Codec: '+sv('codec'),'Peak Concurrent %: '+(parseFloat(sv('conc-pct'))*100)+'%','Headroom: '+((parseFloat(sv('bw-hd'))-1)*100)+'%','','--- RESULTS ---','Voice Bandwidth: '+document.getElementById('r-voice').textContent,'Video Bandwidth: '+document.getElementById('r-video').textContent,'Meetings Bandwidth: '+document.getElementById('r-meet').textContent,'Total Required: '+document.getElementById('r-total').textContent,'LGW Recommendation: '+document.getElementById('r-lgw').textContent,'','--- FIREWALL PORTS ---'];
+  if(depType)DEPS[depType].ports.forEach(p=>lines.push(p[0]+' → '+p[1]+' | '+p[2]+' '+p[3]+' | '+p[4]+' | '+p[5]));
+  if(depType){lines.push('','--- DESIGN RECOMMENDATIONS ---');DEPS[depType].recs.forEach((r,i)=>lines.push((i+1)+'. '+r));}
+  var blob=new Blob([lines.join('\n')],{type:'text/plain'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='BW_Plan_'+(document.getElementById('org').value||'Report')+'.txt';a.click();
+}
+window.onload=function(){calc();};
+</script>
+</body>
+</html>

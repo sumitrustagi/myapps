@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Webex Calling HLD Generator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+:root{
+  --bg:#0A0F1E;--surf:#111827;--surf2:#1A2236;--surf3:#222E44;
+  --br:#2A3A56;--br2:#344562;
+  --blue:#00BCEB;--blue2:#0095C8;--bdim:#00BCEB22;--bdim2:#00BCEB11;
+  --green:#22C55E;--gdim:#22C55E18;
+  --amber:#F59E0B;--adim:#F59E0B18;
+  --red:#EF4444;--rdim:#EF444418;
+  --purple:#A78BFA;--pdim:#A78BFA18;
+  --teal:#14B8A6;--tdim:#14B8A618;
+  --text:#F1F5F9;--text2:#94A3B8;--text3:#64748B;--text4:#475569;
+  --r:8px;--rl:12px;--rxl:16px;
+  --shadow:0 1px 3px rgba(0,0,0,.4);
+  --shadow-md:0 4px 20px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
+h1,h2,h3,h4,h5{font-family:'Syne',sans-serif;line-height:1.25;}
+a{color:var(--blue);text-decoration:none;}a:hover{color:var(--blue2);}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:var(--surf);}
+::-webkit-scrollbar-thumb{background:var(--br2);border-radius:99px;}
+/* ── TOPBAR ────────────────────────────────── */
+.topbar{background:var(--surf);border-bottom:1px solid var(--br);padding:0 28px;height:58px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:var(--shadow-md);}
+.tb-l{display:flex;align-items:center;gap:12px;}
+.tb-badge{width:34px;height:34px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:9px;font-weight:500;color:#001A2E;letter-spacing:.4px;flex-shrink:0;}
+.tb-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text);}
+.tb-sub{font-size:10px;color:var(--text3);margin-top:1px;}
+.tb-nav{display:flex;gap:4px;align-items:center;}
+.tb-nav a{color:var(--text2);font-size:12px;padding:6px 12px;border-radius:6px;transition:all .15s;white-space:nowrap;}
+.tb-nav a:hover{background:var(--surf2);color:var(--text);}
+.tb-nav a.act{background:var(--bdim);color:var(--blue);border:1px solid var(--blue)33;}
+.tb-nav .home-link{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--text3);padding:6px 10px;border-radius:6px;}
+.tb-nav .home-link:hover{background:var(--surf2);color:var(--text);}
+/* ── LAYOUT ────────────────────────────────── */
+.wrap{max-width:1240px;margin:0 auto;padding:28px 24px;}
+.layout{display:grid;grid-template-columns:264px 1fr;min-height:calc(100vh - 58px);}
+.sidebar{background:var(--surf);border-right:1px solid var(--br);padding:20px 16px;overflow-y:auto;max-height:calc(100vh - 58px);position:sticky;top:58px;}
+.main-area{padding:28px 32px;overflow-y:auto;}
+/* ── NAV ───────────────────────────────────── */
+.nav-section{margin-bottom:22px;}
+.nav-lbl{font-size:9px;font-weight:700;color:var(--text3);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;padding:0 8px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 11px;border-radius:var(--r);cursor:pointer;color:var(--text2);font-size:12px;transition:all .12s;margin-bottom:2px;user-select:none;}
+.nav-item:hover{background:var(--surf2);color:var(--text);}
+.nav-item.act{background:var(--bdim);color:var(--blue);border:1px solid var(--blue)22;}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;}
+.nav-item.act .nav-dot{background:var(--blue);}
+.nav-cnt{margin-left:auto;background:var(--surf3);color:var(--text3);font-size:10px;font-family:'DM Mono',monospace;padding:1px 7px;border-radius:99px;}
+.nav-item.act .nav-cnt{background:var(--bdim);color:var(--blue);}
+/* ── CARDS ─────────────────────────────────── */
+.card{background:var(--surf);border:1px solid var(--br);border-radius:var(--rl);padding:20px;box-shadow:var(--shadow);}
+.card+.card{margin-top:14px;}
+.card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.cdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.card-sub{font-size:11px;color:var(--text3);margin-top:-10px;margin-bottom:14px;}
+/* ── GRIDS ─────────────────────────────────── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.full{grid-column:1/-1;}
+/* ── INPUTS ────────────────────────────────── */
+.field{margin-bottom:12px;}
+.field:last-child{margin-bottom:0;}
+label{display:block;font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px;}
+input[type=number],input[type=text],input[type=email],select,textarea{width:100%;background:var(--surf2);border:1.5px solid var(--br);border-radius:var(--r);padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);}
+select option{background:var(--surf2);}
+textarea{resize:vertical;font-family:'DM Mono',monospace;font-size:12px;line-height:1.5;}
+.help{font-size:10px;color:var(--text3);margin-top:3px;line-height:1.4;}
+/* ── BUTTONS ───────────────────────────────── */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--r);border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;transition:all .15s;white-space:nowrap;}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-primary{background:var(--blue);color:#001A2E;}
+.btn-primary:hover{background:var(--blue2);color:#fff;}
+.btn-dark{background:var(--surf3);color:var(--text);border:1px solid var(--br2);}
+.btn-dark:hover{background:var(--br);color:var(--text);}
+.btn-ghost{background:transparent;color:var(--text2);border:1px solid var(--br);}
+.btn-ghost:hover{background:var(--surf2);color:var(--text);border-color:var(--br2);}
+.btn-green{background:var(--gdim);color:var(--green);border:1px solid var(--green)33;}
+.btn-green:hover{background:var(--green)22;}
+.btn-sm{padding:5px 12px;font-size:11px;}
+/* ── INFO BOXES ────────────────────────────── */
+.ibox{background:var(--bdim);border-left:3px solid var(--blue);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.5;}
+.wbox{background:var(--adim);border-left:3px solid var(--amber);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--amber);line-height:1.5;}
+.gbox{background:var(--gdim);border-left:3px solid var(--green);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--green);line-height:1.5;}
+/* ── SECTION HEADER ────────────────────────── */
+.sec-hdr{margin-bottom:22px;}
+.sec-tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:99px;margin-bottom:7px;}
+.t-blue{background:var(--bdim);color:var(--blue);}
+.t-green{background:var(--gdim);color:var(--green);}
+.t-amber{background:var(--adim);color:var(--amber);}
+.t-red{background:var(--rdim);color:var(--red);}
+.t-purple{background:var(--pdim);color:var(--purple);}
+.t-teal{background:var(--tdim);color:var(--teal);}
+.sec-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.sec-desc{color:var(--text2);font-size:12px;line-height:1.6;max-width:720px;}
+/* ── METRICS ───────────────────────────────── */
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0;}
+.metric{background:var(--surf2);border:1px solid var(--br);border-radius:var(--r);padding:14px;}
+.metric.hl{border-color:var(--blue)44;background:var(--bdim);}
+.m-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:5px;}
+.m-val{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--text);}
+.metric.hl .m-val{color:var(--blue);}
+.m-sub{font-size:10px;color:var(--text3);margin-top:2px;}
+/* ── TABLES ────────────────────────────────── */
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{background:var(--surf3);color:var(--text2);font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;padding:9px 12px;text-align:left;border-bottom:1px solid var(--br);}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--br);font-size:12px;color:var(--text2);}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--surf2);}
+.tbl .mono{font-family:'DM Mono',monospace;color:var(--text);}
+.tbl .hi{color:var(--blue);font-family:'DM Mono',monospace;}
+.tbl .ok{color:var(--green);font-family:'DM Mono',monospace;}
+/* ── BADGES ────────────────────────────────── */
+.badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:99px;letter-spacing:.3px;}
+.b-req{background:var(--rdim);color:var(--red);}
+.b-inc{background:var(--gdim);color:var(--green);}
+.b-opt{background:var(--adim);color:var(--amber);}
+.b-na{background:var(--surf3);color:var(--text3);}
+/* ── TOGGLE ────────────────────────────────── */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--br);}
+.toggle-row:last-child{border-bottom:none;}
+.tgl-lbl{font-size:12px;color:var(--text2);}
+.tgl-sub{font-size:10px;color:var(--text3);margin-top:1px;}
+.switch{position:relative;width:36px;height:20px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;background:var(--surf3);border:1px solid var(--br2);border-radius:99px;transition:.2s;cursor:pointer;}
+.slider::before{content:'';position:absolute;width:14px;height:14px;left:2px;top:2px;background:var(--text3);border-radius:50%;transition:.2s;}
+.switch input:checked+.slider{background:var(--bdim);border-color:var(--blue);}
+.switch input:checked+.slider::before{background:var(--blue);transform:translateX(16px);}
+/* ── PRICE ROW ─────────────────────────────── */
+.price-row{display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:end;}
+.pfx{position:relative;}
+.pfx input{padding-left:24px;}
+.pfx::before{content:'$';position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:12px;z-index:1;}
+/* ── DIVIDER ───────────────────────────────── */
+hr.div{border:none;border-top:1px solid var(--br);margin:16px 0;}
+/* ── SUB-SECTION ───────────────────────────── */
+.sub-sec{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text2);margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--br);text-transform:uppercase;letter-spacing:.6px;}
+/* ── CODE OUTPUT ───────────────────────────── */
+.code-out{background:#060B14;border:1px solid var(--br);border-radius:var(--r);padding:16px;font-family:'DM Mono',monospace;font-size:12px;color:#A5F3FC;line-height:1.7;white-space:pre-wrap;overflow-x:auto;max-height:500px;overflow-y:auto;}
+.code-out .c-cmd{color:#FDE68A;}
+.code-out .c-comment{color:#6B7280;}
+.code-out .c-string{color:#86EFAC;}
+.code-out .c-num{color:#F9A8D4;}
+/* ── SIDEBAR TOTAL ─────────────────────────── */
+.sb-total{background:var(--surf2);border:1px solid var(--br);border-radius:var(--rl);padding:16px;margin-top:20px;}
+.sb-total-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);margin-bottom:8px;}
+.sb-total-val{font-family:'DM Mono',monospace;font-size:24px;font-weight:500;color:var(--blue);}
+.sb-total-sub{font-size:10px;color:var(--text3);margin-top:3px;}
+/* ── FOOTER ────────────────────────────────── */
+.footer{background:var(--surf);border-top:1px solid var(--br);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--text3);}
+.footer-brand{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--blue);}
+.footer-author{color:var(--text3);}
+.footer-author strong{color:var(--text2);}
+/* ── OPTION CARDS ──────────────────────────── */
+.opt-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:16px;}
+.opt-card{background:var(--surf2);border:2px solid var(--br);border-radius:var(--rl);padding:14px;cursor:pointer;transition:all .15s;text-align:center;}
+.opt-card:hover{border-color:var(--br2);background:var(--surf3);}
+.opt-card.sel{border-color:var(--blue);background:var(--bdim);}
+.opt-card-icon{font-size:24px;margin-bottom:6px;}
+.opt-card-title{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.opt-card-sub{font-size:10px;color:var(--text3);}
+.opt-card.sel .opt-card-title{color:var(--blue);}
+/* ── TOTALS FOOTER BLOCK ───────────────────── */
+.totals-blk{background:var(--surf);border:1px solid var(--br);border-top:2px solid var(--blue);border-radius:var(--rl);padding:20px 24px;margin-top:20px;}
+.tot-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--br);}
+.tot-row:last-child{border-bottom:none;padding-top:12px;margin-top:4px;}
+.tot-lbl{font-size:12px;color:var(--text2);}
+.tot-val{font-family:'DM Mono',monospace;font-size:13px;color:var(--blue);}
+.tot-row.grand .tot-lbl{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--text);}
+.tot-row.grand .tot-val{font-size:20px;color:var(--green);}
+/* ── SECTION VISIBILITY ────────────────────── */
+.section{display:none;}
+.section.act{display:block;}
+/* ── PRINT ─────────────────────────────────── */
+@media print{
+  .topbar .btn,.sidebar,#pdf-btn,#reset-btn{display:none!important;}
+  .layout{display:block;}
+  .main-area{padding:0;}
+  .section{display:block!important;}
+  body,html{background:#fff;color:#000;}
+  .card{background:#f9f9f9;border:1px solid #ddd;box-shadow:none;}
+  .metric{background:#f0f8ff;}
+  .tbl th{background:#003A5D;color:#fff;}
+  .sec-title{color:#003A5D;}
+  .code-out{background:#f0f0f0;color:#003A5D;}
+  @page{margin:15mm;size:A4;}
+}
+
+.opt-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;}
+.opt-card{background:var(--surf2);border:2px solid var(--br);border-radius:var(--rl);padding:14px 10px;cursor:pointer;transition:all .15s;text-align:center;user-select:none;}
+.opt-card:hover{border-color:var(--br2);background:var(--surf3);}
+.opt-card.sel{border-color:var(--blue);background:var(--bdim);}
+.opt-card-i{font-size:22px;margin-bottom:5px;}
+.opt-card-t{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text);}
+.opt-card.sel .opt-card-t{color:var(--blue);}
+.opt-card-s{font-size:9px;color:var(--text3);margin-top:2px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tb-l">
+    <div class="tb-badge">HLD</div>
+    <div><div class="tb-title">Webex Calling HLD Generator</div><div class="tb-sub">19 intake steps · All 5 deployment scenarios · Licensing + Bandwidth + Features</div></div>
+  </div>
+  <div class="tb-nav"><a href="index.html">⌂ Home</a><a href="hld_generator.html" class="act">HLD Generator</a><a href="license_calc.html">License Calculator</a><a href="bandwidth.html">Network Planner</a><a href="vg_config.html">VG Config Gen</a></div>
+</div>
+
+<div class="layout">
+<aside class="sidebar">
+  <div class="nav-section">
+    <div class="nav-lbl">HLD Steps</div>
+    <div id="hld-nav"></div>
+  </div>
+  <div class="sb-total">
+    <div class="sb-total-label">Webex Monthly Est.</div>
+    <div class="sb-total-val" id="live-total">$0</div>
+    <div class="sb-total-sub">Annual: <span id="live-annual" style="color:var(--green);">$0</span></div>
+    <hr class="div">
+    <div style="font-size:10px;color:var(--text3);">Route List Lic: <span id="live-rl" style="color:var(--text);font-family:'DM Mono',monospace;">0</span></div>
+    <div style="font-size:10px;color:var(--text3);margin-top:3px;">Peak BW: <span id="live-bw" style="color:var(--text);font-family:'DM Mono',monospace;">—</span></div>
+  </div>
+  <div style="margin-top:12px;display:flex;gap:6px;flex-direction:column;">
+    <button class="btn btn-primary btn-sm" onclick="exportHLD()">⬇ Export Intake</button>
+    <button class="btn btn-ghost btn-sm" onclick="window.print()">⎙ Print / PDF</button>
+    <a href="license_calc.html" class="btn btn-ghost btn-sm" style="text-align:center;">🔗 License Calc</a>
+    <a href="bandwidth.html" class="btn btn-ghost btn-sm" style="text-align:center;">🔗 BW Planner</a>
+  </div>
+</aside>
+<div class="main-area" id="main-area">
+
+<div id="sec-basics" class="section act">
+  <div class="sec-hdr"><span class="sec-tag t-blue">Step 1</span><h2 class="sec-title">Project Basics</h2><p class="sec-desc">Populates cover page, revision history, and document header of all 5 HLD variants.</p></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--blue)"></span>Customer</div>
+      <div class="field"><label>Customer Name *</label><input type="text" id="p-customer" data-hld="customer" placeholder="e.g. Acme Corporation Ltd"/></div>
+      <div class="field"><label>Project Name</label><input type="text" id="p-project" data-hld="project" placeholder="e.g. Webex Calling Migration 2025"/></div>
+      <div class="field"><label>Lead Architect</label><input type="text" id="p-arch" data-hld="architect" placeholder="e.g. John Smith, CCIE #12345"/></div>
+      <div class="field"><label>Partner / SI</label><input type="text" id="p-partner" data-hld="partner" placeholder="e.g. Cisco Advanced Services"/></div>
+      <div class="field"><label>Approver</label><input type="text" id="p-approver" data-hld="approver" placeholder="Name and title"/></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--amber)"></span>Document Control</div>
+      <div class="field"><label>Document Date</label><input type="text" id="p-date" data-hld="date"/></div>
+      <div class="field"><label>Version</label><input type="text" id="p-ver" data-hld="version" value="1.0"/></div>
+      <div class="field"><label>Classification</label><select id="p-class" data-hld="classification"><option>Confidential</option><option>Internal Use Only</option><option>Restricted</option></select></div>
+      <div class="field"><label>Industry</label><select id="p-industry" data-hld="industry"><option value="">Select...</option><option>Financial Services</option><option>Healthcare</option><option>Manufacturing</option><option>Retail</option><option>Education</option><option>Government / Public Sector</option><option>Professional Services</option><option>Technology</option><option>Hospitality</option><option>Other</option></select></div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:flex-end;margin-top:14px;"><button class="btn btn-primary" onclick="navGo(1)">Next →</button></div>
+</div>
+
+<div id="sec-model" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-blue">Step 2</span><h2 class="sec-title">Deployment Model</h2><p class="sec-desc">This drives which sections appear and all design decisions. All 5 variants are fully supported.</p></div>
+  <div class="card">
+    <div class="card-title"><span class="cdot" style="background:var(--blue)"></span>Select Deployment Model *</div>
+    <div class="opt-grid">
+      <div class="opt-card" onclick="selModel('Multi-Tenant (MT) Only',this)"><div class="opt-card-i">☁️</div><div class="opt-card-t">MT Only</div><div class="opt-card-s">Webex Cloud<br>Greenfield</div></div>
+      <div class="opt-card" onclick="selModel('Dedicated Instance (DI)',this)"><div class="opt-card-i">🏢</div><div class="opt-card-t">DI Only</div><div class="opt-card-s">CUCM in Equinix<br>CUCM parity</div></div>
+      <div class="opt-card" onclick="selModel('MT with On-Prem CUCM',this)"><div class="opt-card-i">🔀</div><div class="opt-card-t">MT + On-Prem</div><div class="opt-card-s">Hybrid<br>LGW bridges both</div></div>
+      <div class="opt-card" onclick="selModel('DI with On-Prem CUCM',this)"><div class="opt-card-i">🔗</div><div class="opt-card-t">DI + On-Prem</div><div class="opt-card-s">Hybrid DI<br>Phased migration</div></div>
+      <div class="opt-card" onclick="selModel('DI + Multi-Tenant (DI+MT)',this)"><div class="opt-card-i">⚡</div><div class="opt-card-t">DI + MT</div><div class="opt-card-s">Mixed enterprise<br>Unified via LGW</div></div>
+    </div>
+    <input type="hidden" id="p-model" data-hld="deployment_model"/>
+    <div class="field"><label>Justification *</label><textarea id="p-just" data-hld="model_justification" rows="4" placeholder="e.g. Customer has CUCM JTAPI integration. DI preserves feature parity while eliminating hardware refresh..."></textarea></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:14px;"><button class="btn btn-ghost" onclick="navGo(-1)">← Prev</button><button class="btn btn-primary" onclick="navGo(1)">Next →</button></div>
+</div>
+
+<div id="sec-sites" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-blue">Step 3</span><h2 class="sec-title">Sites & Locations</h2><p class="sec-desc">Each site populates PSTN per-site table, E.911 ESA, number plan appendix, and network diagram.</p></div>
+  <div id="sites-con"></div>
+  <button class="btn btn-ghost" onclick="addSite()" style="margin-top:8px;">+ Add Site</button>
+  <div style="display:flex;justify-content:space-between;margin-top:14px;"><button class="btn btn-ghost" onclick="navGo(-1)">← Prev</button><button class="btn btn-primary" onclick="navGo(1)">Next →</button></div>
+</div>
+
+<div id="sec-asis" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-amber">Step 4</span><h2 class="sec-title">Current State (AS-IS)</h2><p class="sec-desc">Documents the existing telephony environment and justifies the migration.</p></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--amber)"></span>Existing Platform</div>
+      <div class="field"><label>PBX Platform</label><select id="a-pbx" data-hld="existing_pbx"><option value="">Select...</option><option>Cisco CUCM</option><option>Cisco BE6000/BE7000</option><option>Avaya CM</option><option>Avaya IP Office</option><option>Mitel MiVoice</option><option>NEC UNIVERGE</option><option>3CX</option><option>Microsoft Teams DR</option><option>Skype for Business</option><option>No existing PBX (greenfield)</option><option>Other</option></select></div>
+      <div class="field"><label>PBX Version</label><input type="text" id="a-ver" data-hld="pbx_version" placeholder="e.g. CUCM 12.5(1)SU8"/></div>
+      <div class="field"><label>Total Users</label><input type="number" id="a-users" data-hld="existing_users" placeholder="e.g. 2500"/></div>
+      <div class="field"><label>Existing Voicemail</label><select id="a-vm" data-hld="existing_vm"><option value="">None/Select...</option><option>Cisco Unity Connection</option><option>Avaya Messaging</option><option>Microsoft Exchange UM</option><option>Other</option></select></div>
+      <div class="field"><label>Existing Contact Centre</label><select id="a-cc" data-hld="existing_cc"><option value="">None/Select...</option><option>Cisco UCCX</option><option>Cisco UCCE/PCCE</option><option>Webex Contact Center</option><option>Avaya ACD</option><option>Genesys</option><option>Other</option></select></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--amber)"></span>Network & Drivers</div>
+      <div class="field"><label>WAN Topology</label><select id="a-wan" data-hld="wan"><option value="">Select...</option><option>MPLS</option><option>MPLS + Internet (dual)</option><option>Cisco SD-WAN</option><option>Fortinet SD-WAN</option><option>Direct Internet (DIA per site)</option><option>Other</option></select></div>
+      <div class="field"><label>Perimeter Firewall</label><select id="a-fw" data-hld="firewall"><option value="">Select...</option><option>Cisco FTD/ASA</option><option>Palo Alto Networks</option><option>Fortinet FortiGate</option><option>Check Point</option><option>Other</option></select></div>
+      <div class="field"><label>Migration Drivers</label><textarea id="a-drivers" data-hld="migration_drivers" rows="5" placeholder="• PBX end of support&#10;• High TCO on-premises&#10;• Remote working gaps&#10;• AI features required&#10;• PSTN contract expiry"></textarea></div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:14px;"><button class="btn btn-ghost" onclick="navGo(-1)">← Prev</button><button class="btn btn-primary" onclick="navGo(1)">Next →</button></div>
+</div>
+
+<div id="sec-pstn" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-blue">Step 5</span><h2 class="sec-title">PSTN & Trunk Design</h2><p class="sec-desc">Define PSTN strategy, trunks, and route groups. These feed the dial plan and HLD Sections 6–8.</p></div>
+  <div class="card">
+    <div class="card-title"><span class="cdot" style="background:var(--blue)"></span>PSTN Strategy</div>
+    <div class="g2">
+      <div class="field"><label>Overall PSTN Model *</label><select id="p-pstn" data-hld="pstn_model"><option value="">Select...</option><option>Cloud PSTN only (Cisco Calling Plan / CCP)</option><option>Premises-based PSTN via LGW only</option><option>Mixed — some sites cloud, others LGW</option><option>PSTN via on-prem CUCM</option><option>Cloud PSTN primary + CUCM PSTN failover</option></select></div>
+      <div class="field"><label>Failover Strategy</label><select id="p-pstn-fail" data-hld="pstn_failover"><option>No redundancy</option><option>Dual SIP trunks (same provider)</option><option>Dual SIP trunks (dual provider)</option><option>Cloud CCP failover if LGW fails</option><option>LGW primary + CUCM failover</option></select></div>
+      <div class="field"><label>CLI / Calling Party ID</label><select id="p-pstn-cli" data-hld="pstn_cli"><option>+E.164 normalised (recommended)</option><option>National format</option><option>Site-specific</option><option>Mixed</option></select></div>
+      <div class="field"><label>Number Porting</label><select id="p-pstn-port" data-hld="pstn_porting"><option>Full port all numbers</option><option>Partial port (DID blocks)</option><option>No porting — new Webex numbers</option><option>Retain existing provider (BYOC/LGW)</option><option>Phased (site by site)</option></select></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:12px;">
+    <div class="card-title"><span class="cdot" style="background:var(--amber)"></span>Trunks</div>
+    <div id="trunks-con"></div>
+    <button class="btn btn-ghost btn-sm" onclick="addTrunk()" style="margin-top:8px;">+ Add Trunk</button>
+  </div>
+  <div class="card" style="margin-top:12px;">
+    <div class="card-title"><span class="cdot" style="background:var(--green)"></span>Route Groups</div>
+    <div id="rgs-con"></div>
+    <button class="btn btn-ghost btn-sm" onclick="addRG()" style="margin-top:8px;">+ Add Route Group</button>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:14px;"><button class="btn btn-ghost" onclick="navGo(-1)">← Prev</button><button class="btn btn-primary" onclick="navGo(1)">Next →</button></div>
+</div>
+
+<div id="sec-lgw" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-amber">Step 6</span><h2 class="sec-title">Local Gateway / CUBE</h2><p class="sec-desc">Section 7 — hardware platform, trunk type, HA, certificates, and SRST survivability design.</p></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--amber)"></span>Platform & Trunk</div>
+      <div class="field"><label>LGW Requirement</label><select id="lgw-req" data-hld="lgw_required"><option>Yes — new LGW to be procured</option><option>Yes — existing CUBE to be reused</option><option>Yes — mix of new and existing</option><option>No — Cloud PSTN only</option></select></div>
+      <div class="field"><label>Platform</label><select id="lgw-plat" data-hld="lgw_platform"><option>ISR 1100 (≤500 calls)</option><option>ISR 4321 (≤250)</option><option>ISR 4331 (≤500)</option><option>ISR 4351 (≤750)</option><option>ISR 4431 (≤4000)</option><option>ISR 4451 (≤7500 — HQ)</option><option>Catalyst C8200 (≤6500)</option><option>Catalyst C8300 (≤6500)</option><option>Catalyst C8500 (6500+)</option><option>C8000V (virtual)</option><option>Ribbon SBC 1000/2000</option><option>AudioCodes Mediant</option><option>Oracle ACME SBC</option></select></div>
+      <div class="field"><label>Trunk Type</label><select id="lgw-trunk" data-hld="lgw_trunk_type"><option>Certificate-based / mTLS (recommended)</option><option>Registration-based (SIP Digest)</option></select></div>
+      <div class="field"><label>Total Concurrent Calls</label><input type="number" id="lgw-calls" data-hld="lgw_concurrent" placeholder="e.g. 500"/></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--amber)"></span>HA & Certs</div>
+      <div class="field"><label>HA Mode</label><select id="lgw-ha" data-hld="lgw_ha"><option>None (single LGW — small branch)</option><option>Dual LGW — DNS SRV active/active</option><option>Dual LGW — active/standby</option><option>CUBE HA — stateful (C8200/C8300)</option><option>vCUBE HA — hypervisor</option></select></div>
+      <div class="field"><label>SRST</label><select id="lgw-srst" data-hld="lgw_srst"><option>Yes — full SRST</option><option>Yes — basic (emergency only)</option><option>No</option></select></div>
+      <div class="field"><label>Certificate Authority</label><select id="lgw-ca" data-hld="lgw_ca"><option>DigiCert</option><option>Entrust</option><option>Sectigo (Comodo)</option><option>GlobalSign</option><option>GoDaddy</option><option>Customer existing CA</option></select></div>
+      <div class="field"><label>IOS-XE Version</label><input type="text" id="lgw-ios" data-hld="lgw_iosxe" placeholder="e.g. 17.12.2"/></div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:14px;"><button class="btn btn-ghost" onclick="navGo(-1)">← Prev</button><button class="btn btn-primary" onclick="navGo(1)">Next →</button></div>
+</div>
+
+<div id="sec-dialplan" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-purple">Step 7</span><h2 class="sec-title">Dial Plan Design</h2><p class="sec-desc">Section 8.2 — numbering, ESN, patterns, route groups, partitions/CSS. The most customer-specific section.</p></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--purple)"></span>Numbering & Approach</div>
+      <div class="field"><label>Dial Plan Approach</label><select id="dp-approach" data-hld="dp_approach"><option>+E.164 Globalised (recommended)</option><option>Localised (legacy)</option><option>Hybrid +E.164 / National</option></select></div>
+      <div class="g2" style="gap:8px;">
+        <div class="field"><label>Extension Length</label><select id="dp-elen" data-hld="ext_length"><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>Mixed</option></select></div>
+        <div class="field"><label>Extension Range</label><input type="text" id="dp-efmt" data-hld="ext_format" placeholder="e.g. 1XXX (site 1)"/></div>
+        <div class="field"><label>ESN Format</label><input type="text" id="dp-esn" data-hld="esn_format" placeholder="e.g. 8+3-digit site+4-digit ext"/></div>
+        <div class="field"><label>PSTN Access Prefix</label><select id="dp-pfx" data-hld="pstn_prefix"><option>9 (North America)</option><option>0 (Europe)</option><option>None — +E.164 only</option><option>Both 9 and 0</option></select></div>
+        <div class="field"><label>Emergency Number(s)</label><input type="text" id="dp-emerg" data-hld="emergency_numbers" placeholder="e.g. 911 / 999 / 112"/></div>
+        <div class="field"><label>International Calling</label><select id="dp-intl" data-hld="intl_calling"><option>Unrestricted</option><option>Selected users only</option><option>Domestic only</option><option>Emergency only</option></select></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--purple)"></span>Dial Patterns</div>
+      <div class="ibox">Define key patterns — added to HLD Section 8.2 pattern table and flowchart.</div>
+      <div id="dp-con"></div>
+      <button class="btn btn-ghost btn-sm" onclick="addDP()" style="margin-top:8px;">+ Add Pattern</button>
+      <div class="field" style="margin-top:12px;"><label>Dial Plan Notes</label><textarea id="dp-notes" data-hld="dp_notes" rows="4" placeholder="e.g. Legacy short codes, FACs, translation rules, ELIN mapping"></textarea></div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:14px;"><button class="btn btn-ghost" onclick="navGo(-1)">← Prev</button><button class="btn btn-primary" onclick="navGo(1)">Next →</button></div>
+</div>
+
+<div id="sec-licensing" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-green">Step 8</span><h2 class="sec-title">Licensing & Users</h2><p class="sec-desc">Drives the feature matrix (Section 11), capacity planning (Section 17), and bill of materials. <a href="license_calc.html" style="color:var(--blue);">Open full License Calculator ↗</a></p></div>
+  <div class="wbox">⚠ Prices are indicative reference list prices only. Get a formal CCW quote before presenting to a customer.</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--blue)"></span>Webex Calling MT</div>
+      <div class="field"><label>Standard (~$17/user/mo)</label><div class="price-row"><input type="number" id="l-std" data-hld="wxc_std_qty" value="0" min="0" oninput="calcLive()"/><div class="pfx"><input type="number" id="lp-std" value="17" min="0" step="0.01" oninput="calcLive()"/></div></div><div class="help">1 device OR softclient. VM, AA, Hunt, Park, Pickup, E.911.</div></div>
+      <div class="field"><label>Professional (~$25/user/mo)</label><div class="price-row"><input type="number" id="l-pro" data-hld="wxc_pro_qty" value="0" min="0" oninput="calcLive()"/><div class="pfx"><input type="number" id="lp-pro" value="25" min="0" step="0.01" oninput="calcLive()"/></div></div><div class="help">Phone + softclient. BLF, Exec/EA, AI Assistant, CTI, SNR.</div></div>
+      <div class="field"><label>Customer Assist (~$35/agent/mo)</label><div class="price-row"><input type="number" id="l-ca" data-hld="wxc_ca_qty" value="0" min="0" oninput="calcLive()"/><div class="pfx"><input type="number" id="lp-ca" value="35" min="0" step="0.01" oninput="calcLive()"/></div></div><div class="help">All Professional + queue supervisor, AI summaries, barge/whisper, queue recording.</div></div>
+      <div class="field"><label>Webex Suite (~$35/user/mo)</label><div class="price-row"><input type="number" id="l-suite" data-hld="wxc_suite_qty" value="0" min="0" oninput="calcLive()"/><div class="pfx"><input type="number" id="lp-suite" value="35" min="0" step="0.01" oninput="calcLive()"/></div></div><div class="help">Professional Calling + Webex Meetings + Messaging + Webinars.</div></div>
+      <div class="field"><label>Workspace / ATA Ports (~$15/device/mo)</label><div class="price-row"><input type="number" id="l-ws" data-hld="workspace_qty" value="0" min="0" oninput="calcLive()"/><div class="pfx"><input type="number" id="lp-ws" value="15" min="0" step="0.01" oninput="calcLive()"/></div></div><div class="help">Common area phones, ATA FXS/FXO ports, DECT handsets, meeting room devices.</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--red)"></span>PSTN Route List Calls (On-Prem CUCM)</div>
+      <div class="ibox">Route List Calls license is needed when on-prem CUCM users access cloud CCP PSTN via Webex. <strong>DI subscribers: INCLUDED — no extra cost.</strong></div>
+      <div class="field"><label>On-Prem CUCM Users needing cloud PSTN</label><input type="number" id="l-cucm" data-hld="route_list_cucm_users" value="0" min="0" oninput="calcLive()"/></div>
+      <div class="field"><label>Financial Turrets / Vertical Apps</label><input type="number" id="l-turrets" data-hld="route_list_turrets" value="0" min="0" oninput="calcLive()"/></div>
+      <div class="field"><label>Peak Concurrent %</label><select id="l-rl-pct" data-hld="rl_pct" onchange="calcLive()"><option value="0.10">10%</option><option value="0.12">12%</option><option value="0.15" selected>15% (standard)</option><option value="0.20">20%</option><option value="0.25">25%</option></select></div>
+      <div class="field"><label>Route List Cost ($/concurrent/mo)</label><div class="pfx"><input type="number" id="l-rl-cost" value="3" min="0" step="0.01" oninput="calcLive()"/></div><div class="help">⚠ Community est. ~$2–4. Channel-confidential. SKU: A-FLEX-CALLING-RLC.</div></div>
+      <hr class="div">
+      <div class="field"><label>DI Users (Route List INCLUDED in DI)</label><input type="number" id="l-di" data-hld="di_users" value="0" min="0" oninput="calcLive()"/><div class="help">No Route List charge for DI subscribers.</div></div>
+    </div>
+  </div>
+  <div class="mgrid">
+    <div class="metric hl"><div class="m-label">MT Monthly</div><div class="m-val" id="lout-mt">$0</div></div>
+    <div class="metric"><div class="m-label">Route List Licenses</div><div class="m-val" id="lout-rl">0</div><div class="m-sub">+20% burst: <span id="lout-rlb">0</span></div></div>
+    <div class="metric"><div class="m-label">Route List Monthly</div><div class="m-val" id="lout-rl-cost">$0</div></div>
+    <div class="metric hl"><div class="m-label">Grand Total Monthly</div><div class="m-val" id="lout-grand">$0</div><div class="m-sub">Annual: <span id="lout-annual">$0</span></div></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:14px;"><button class="btn btn-ghost" onclick="navGo(-1)">← Prev</button><button class="btn btn-primary" onclick="navGo(1)">Next →</button></div>
+</div>
+
+<div id="sec-features" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-blue">Step 9</span><h2 class="sec-title">Features & Services</h2><p class="sec-desc">Each feature gets a dedicated sub-section in the HLD. AA, Hunt, Queue, Pickup, Park, SNR, Voice Portal, VM Groups, Paging, MOH, Exec/EA, DECT, Webex Meetings.</p></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--blue)"></span>Calling Features</div>
+      <div class="g2" style="gap:8px;">
+        <div class="field"><label>Auto Attendants</label><input type="number" id="f-aa" data-hld="aa_count" value="0"/></div>
+        <div class="field"><label>AA Complexity</label><select id="f-aal" data-hld="aa_level"><option>Single level</option><option>Multi-level nested</option><option>AI speech recognition</option></select></div>
+        <div class="field"><label>Hunt Groups</label><input type="number" id="f-hg" data-hld="hg_count" value="0"/></div>
+        <div class="field"><label>HG Ring Pattern</label><select id="f-hgr" data-hld="hg_ring"><option>Simultaneous</option><option>Sequential (Top Down)</option><option>Circular</option><option>Uniform (Longest Idle)</option></select></div>
+        <div class="field"><label>Call Queues</label><input type="number" id="f-cq" data-hld="cq_count" value="0"/></div>
+        <div class="field"><label>CQ Agent License</label><select id="f-cql" data-hld="cq_license"><option>Customer Assist (supervisor, AI)</option><option>Standard/Professional (basic)</option></select></div>
+        <div class="field"><label>Call Pickup Groups</label><input type="number" id="f-pu" data-hld="pickup_groups" value="0"/></div>
+        <div class="field"><label>Call Park Extensions</label><input type="number" id="f-pk" data-hld="park_extensions" value="0"/></div>
+        <div class="field"><label>Voice Portal</label><select id="f-vp" data-hld="voice_portal"><option>Yes — enabled</option><option>No</option></select></div>
+        <div class="field"><label>Voice Mail Groups</label><input type="number" id="f-vmg" data-hld="vm_groups" value="0"/></div>
+        <div class="field"><label>SNR / Single Number Reach</label><select id="f-snr" data-hld="snr"><option>No</option><option>Yes</option></select></div>
+        <div class="field"><label>Group Paging</label><select id="f-pg" data-hld="group_paging"><option>No</option><option>Yes — phone speaker</option><option>Yes — overhead ATA</option></select></div>
+        <div class="field"><label>Announcement Repository</label><select id="f-ar" data-hld="announcement_repo"><option>No</option><option>Yes</option></select></div>
+        <div class="field"><label>Location Intercept</label><select id="f-li" data-hld="location_intercept"><option>No</option><option>Yes</option></select></div>
+        <div class="field"><label>Virtual Extensions</label><select id="f-ve" data-hld="virtual_ext"><option>No</option><option>Yes</option></select></div>
+        <div class="field"><label>Music on Hold</label><select id="f-moh" data-hld="moh"><option>Default Webex MOH</option><option>Custom audio (branded)</option><option>No MOH (silence)</option></select></div>
+        <div class="field"><label>Executive / EA Pairs</label><input type="number" id="f-exec" data-hld="exec_ea_pairs" value="0"/></div>
+        <div class="field"><label>DECT Network</label><select id="f-dect" data-hld="dect"><option>No</option><option>Yes — Cisco DECT</option><option>Yes — 3rd party</option></select></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--purple)"></span>Webex Meetings (Optional)</div>
+      <div class="toggle-row" style="margin-bottom:10px;">
+        <div><div class="tgl-lbl">Include Webex Meetings in HLD scope?</div><div class="tgl-sub">Populates Section 11 — Meetings integration design</div></div>
+        <label class="switch"><input type="checkbox" id="f-meet-en" data-hld="meetings_enabled" onchange="document.getElementById('meet-f').style.display=this.checked?'block':'none'"/><span class="slider"></span></label>
+      </div>
+      <div id="meet-f" style="display:none;">
+        <div class="g2" style="gap:8px;">
+          <div class="field"><label>Meeting License</label><select id="f-ml" data-hld="meetings_license"><option>Webex Meetings (included in Suite)</option><option>Webex Meetings Pro</option><option>Webex Events add-on</option></select></div>
+          <div class="field"><label>Meeting Users</label><input type="number" id="f-mu" data-hld="meetings_users" value="0" placeholder="e.g. 200"/></div>
+          <div class="field"><label>Max Attendees</label><input type="number" id="f-mmax" data-hld="meetings_max" value="100" placeholder="e.g. 1000"/></div>
+          <div class="field"><label>Meetings Recording</label><select id="f-mrec" data-hld="meetings_recording"><option>Cloud recording (included)</option><option>Local recording only</option><option>Compliance recording</option></select></div>
+        </div>
+      </div>
+      <hr class="div">
+      <div class="card-title" style="margin-top:8px;"><span class="cdot" style="background:var(--teal)"></span>Video Endpoints (Optional)</div>
+      <div class="toggle-row" style="margin-bottom:10px;">
+        <div><div class="tgl-lbl">Include Video in scope?</div></div>
+        <label class="switch"><input type="checkbox" id="f-vid-en" data-hld="video_enabled" onchange="document.getElementById('vid-f').style.display=this.checked?'block':'none'"/><span class="slider"></span></label>
+      </div>
+      <div id="vid-f" style="display:none;">
+        <div class="field"><label>Cisco Room/Board/Desk Devices</label><input type="number" id="f-vroom" data-hld="video_room_kits" value="0"/></div>
+        <div class="field"><label>Video Phone Users</label><input type="number" id="f-vph" data-hld="video_phone_users" value="0"/></div>
+        <div class="field"><label>Video Quality</label><select id="f-vq" data-hld="video_quality"><option>720p HD (recommended)</option><option>1080p FHD</option><option>360p (branch / low BW)</option></select></div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:14px;"><button class="btn btn-ghost" onclick="navGo(-1)">← Prev</button><button class="btn btn-primary" onclick="navGo(1)">Next →</button></div>
+</div>
+
+<div id="sec-network" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-purple">Step 10</span><h2 class="sec-title">Network, QoS & Bandwidth</h2><p class="sec-desc">Sections 9 and 14. Firewall, SIP ALG, QoS, SD-WAN, and bandwidth planning. <a href="bandwidth.html" style="color:var(--blue);">Open full Network Planner ↗</a></p></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--purple)"></span>Firewall & Security</div>
+      <div class="field"><label>Firewall Vendor & Model *</label><input type="text" id="net-fw" data-hld="fw_vendor" placeholder="e.g. Palo Alto PA-3220, Fortinet FortiGate 600E"/></div>
+      <div class="field"><label>SIP ALG Status *</label><select id="net-alg" data-hld="sip_alg"><option>Currently enabled — will be disabled before go-live</option><option>Currently disabled — no action needed</option><option>Unknown — needs assessment</option></select></div>
+      <div class="field"><label>Outbound Web Proxy?</label><select id="net-proxy" data-hld="web_proxy"><option>No</option><option>Yes (HTTPS inspection — Webex bypass required)</option></select></div>
+      <div class="field"><label>VPN Split Tunnel?</label><select id="net-vpn" data-hld="vpn_split"><option>Yes — Webex bypasses VPN (recommended)</option><option>No — full tunnel</option><option>No corporate VPN</option></select></div>
+      <div class="field"><label>QoS Implemented?</label><select id="net-qos" data-hld="qos"><option>Yes — end-to-end DSCP marking</option><option>Yes — partial (some sites)</option><option>No — not implemented</option><option>SD-WAN handles QoS</option></select></div>
+      <div class="field"><label>SD-WAN Platform</label><select id="net-sdwan" data-hld="sdwan"><option>None</option><option>Cisco SD-WAN (Viptela)</option><option>Cisco Meraki</option><option>VMware SD-WAN</option><option>Fortinet SD-WAN</option><option>Other</option></select></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--teal)"></span>Bandwidth Planning</div>
+      <div class="field"><label>Total Users</label><input type="number" id="bw-users" data-hld="bw_users" oninput="calcLive()" placeholder="e.g. 500"/></div>
+      <div class="field"><label>Peak Concurrent %</label><select id="bw-pct" data-hld="bw_pct" onchange="calcLive()"><option value="0.10">10%</option><option value="0.12">12%</option><option value="0.15" selected>15%</option><option value="0.20">20%</option><option value="0.25">25%</option></select></div>
+      <div class="field"><label>Voice Codec</label><select id="bw-codec" data-hld="bw_codec" onchange="calcLive()"><option>G.711 (87 kbps)</option><option>G.722 (87 kbps)</option><option>G.729 (24 kbps)</option><option>Opus (50 kbps)</option></select></div>
+      <div class="field"><label>Headroom %</label><select id="bw-hd" data-hld="bw_headroom" onchange="calcLive()"><option value="10">10%</option><option value="15">15%</option><option value="20">20%</option><option value="25" selected>25%</option><option value="30">30%</option></select></div>
+      <div class="mgrid" style="margin-top:8px;">
+        <div class="metric hl"><div class="m-label">Voice BW</div><div class="m-val" id="bwout-v">0 kbps</div></div>
+        <div class="metric hl"><div class="m-label">Total Required</div><div class="m-val" id="bwout-t">0 kbps</div></div>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:14px;"><button class="btn btn-ghost" onclick="navGo(-1)">← Prev</button><button class="btn btn-primary" onclick="navGo(1)">Next →</button></div>
+</div>
+
+<div id="sec-migration" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-green">Step 11</span><h2 class="sec-title">Migration Planning</h2><p class="sec-desc">Section 15 — phasing table, cut-over strategy, risk register, and dependencies checklist.</p></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--green)"></span>Approach</div>
+      <div class="field"><label>Migration Approach *</label><select id="m-app" data-hld="migration_approach"><option>Phased — site by site (recommended)</option><option>Phased — user group by group</option><option>Big bang — all sites simultaneously</option><option>Hybrid parallel run</option></select></div>
+      <div class="field"><label>Pilot Site / Group</label><input type="text" id="m-pilot" data-hld="pilot_site" placeholder="e.g. HQ London — IT Department (20 users)"/></div>
+      <div class="field"><label>Cutover Window</label><select id="m-cut" data-hld="cutover"><option>Weekend (Fri night → Mon — recommended)</option><option>After hours (weekday evening)</option><option>Business hours (with on-site support)</option></select></div>
+      <div class="field"><label>Rollback Period</label><select id="m-roll" data-hld="rollback"><option>2 weeks (recommended minimum)</option><option>1 week</option><option>4 weeks</option><option>No rollback planned</option></select></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--green)"></span>Training & Constraints</div>
+      <div class="field"><label>Training Plan</label><select id="m-train" data-hld="training"><option>Webex self-guided (Cisco portal)</option><option>Instructor-led classroom</option><option>Custom video training</option><option>Train-the-trainer</option><option>Champions programme</option></select></div>
+      <div class="field"><label>UAT Required?</label><select id="m-uat" data-hld="uat"><option>Yes — formal UAT with sign-off gate</option><option>Yes — informal IT team testing</option><option>No</option></select></div>
+      <div class="field"><label>Migration Constraints / Fixed Dates</label><textarea id="m-con" data-hld="migration_constraints" rows="4" placeholder="e.g. Cannot migrate Dec (year-end freeze), PSTN contract ends April 2026"></textarea></div>
+    </div>
+  </div>
+  <div style="display:flex;justify-content:space-between;margin-top:14px;"><button class="btn btn-ghost" onclick="navGo(-1)">← Prev</button><button class="btn btn-primary" onclick="navGo(1)">Next →</button></div>
+</div>
+
+<div id="sec-summary" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-green">Review</span><h2 class="sec-title">Review & Export</h2><p class="sec-desc">Review all entries and export the completed intake. Hand the file + 5 HLD DOCX templates to your HLD generator.</p></div>
+  <div class="gbox">✓ Intake complete. Review the summary below then export.</div>
+  <div class="totals-blk">
+    <div class="tot-row"><span class="tot-lbl">Customer</span><span class="tot-val" id="sum-cust">—</span></div>
+    <div class="tot-row"><span class="tot-lbl">Deployment Model</span><span class="tot-val" id="sum-model">—</span></div>
+    <div class="tot-row"><span class="tot-lbl">Total Sites</span><span class="tot-val" id="sum-sites">—</span></div>
+    <div class="tot-row"><span class="tot-lbl">MT Licenses (std+pro+ca+suite)</span><span class="tot-val" id="sum-mt">0</span></div>
+    <div class="tot-row"><span class="tot-lbl">Route List Licenses (CUCM via CCP)</span><span class="tot-val" id="sum-rl">0</span></div>
+    <div class="tot-row"><span class="tot-lbl">Peak Bandwidth Required</span><span class="tot-val" id="sum-bw">—</span></div>
+    <div class="tot-row grand"><span class="tot-lbl">Monthly License Estimate</span><span class="tot-val" id="sum-grand">$0</span></div>
+  </div>
+  <div style="display:flex;gap:12px;margin-top:16px;justify-content:flex-end;">
+    <button class="btn btn-ghost" onclick="navGo(-1)">← Prev</button>
+    <button class="btn btn-dark" onclick="window.print()">⎙ Print / PDF</button>
+    <button class="btn btn-primary" onclick="exportHLD()">⬇ Export Intake</button>
+  </div>
+</div>
+
+</div></div>
+
+
+<footer class="footer">
+  <div>
+    <span class="footer-brand">Cisco UC &amp; Webex Suite</span>
+    <span style="color:var(--br2);margin:0 8px;">·</span>
+    <span>Licensing · HLD · Network Planning · Configuration</span>
+  </div>
+  <div class="footer-author">Designed &amp; developed by <strong>Sumit Rustagi</strong></div>
+</footer>
+
+<script>
+var hldStep=0;
+var HSTEPS=[
+  {id:'basics',t:'Project Basics',i:'📋'},
+  {id:'model',t:'Deployment Model',i:'☁️'},
+  {id:'sites',t:'Sites & Locations',i:'📍'},
+  {id:'asis',t:'Current State',i:'🏗'},
+  {id:'pstn',t:'PSTN & Trunking',i:'🌐'},
+  {id:'lgw',t:'Local Gateway',i:'🔌'},
+  {id:'dialplan',t:'Dial Plan',i:'📞'},
+  {id:'licensing',t:'Licensing',i:'🪪'},
+  {id:'features',t:'Features',i:'⭐'},
+  {id:'network',t:'Network & BW',i:'🛡'},
+  {id:'migration',t:'Migration',i:'🚀'},
+  {id:'summary',t:'Review & Export',i:'✅'},
+];
+function n(id){return parseFloat(document.getElementById(id)?.value)||0;}
+function sv(id){return document.getElementById(id)?.value||'';}
+function set(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+
+function buildNav(){
+  var mdl=sv('p-model');
+  var needsLGW=['MT with On-Prem CUCM','Dedicated Instance (DI)','DI with On-Prem CUCM','DI + Multi-Tenant (DI+MT)'].includes(mdl)||(sv('p-pstn')||'').includes('LGW');
+  var vis=HSTEPS.filter(s=>(s.id!=='lgw'||needsLGW));
+  var nav=document.getElementById('hld-nav');
+  if(!nav)return;
+  nav.innerHTML=vis.map((s,i)=>'<div class="nav-item'+(hldStep===i?' act':'')+'" onclick="gotoStep('+i+',this)">'+
+    '<span class="nav-dot"></span>'+s.i+' '+s.t+'</div>').join('');
+}
+function gotoStep(i,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('act'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('act'));
+  var vis=HSTEPS.filter(s=>{var m=sv('p-model');return s.id!=='lgw'||['MT with On-Prem CUCM','Dedicated Instance (DI)','DI with On-Prem CUCM','DI + Multi-Tenant (DI+MT)'].includes(m);});
+  if(i>=0&&i<vis.length){
+    hldStep=i;
+    var sec=document.getElementById('sec-'+vis[i].id);
+    if(sec)sec.classList.add('act');
+    if(el)el.classList.add('act');
+  }
+  window.scrollTo(0,0);
+  calcLive();
+}
+function navGo(d){
+  var vis=HSTEPS.filter(s=>{var m=sv('p-model');return s.id!=='lgw'||['MT with On-Prem CUCM','Dedicated Instance (DI)','DI with On-Prem CUCM','DI + Multi-Tenant (DI+MT)'].includes(m);});
+  var items=document.querySelectorAll('#hld-nav .nav-item');
+  var next=hldStep+d;
+  if(next>=0&&next<items.length)gotoStep(next,items[next]);
+}
+function selModel(val,el){
+  document.getElementById('p-model').value=val;
+  document.querySelectorAll('.opt-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  buildNav();
+}
+var sC=0,tC=0,rC=0,dpC=0;
+function addSite(){
+  sC++;
+  var c=document.getElementById('sites-con');
+  var d=document.createElement('div');d.className='card';
+  d.innerHTML='<div style="display:flex;justify-content:space-between;margin-bottom:10px;"><span class="card-title" style="margin-bottom:0"><span class="cdot" style="background:var(--blue)"></span>Site '+sC+'</span>'+(sC>1?'<button class="btn btn-ghost btn-sm" onclick="this.closest(\'.card\').remove()">Remove</button>':'')+'</div>'+
+  '<div class="g3" style="gap:8px;">'+
+  '<div class="field"><label>Site Name *</label><input type="text" data-hld="site'+sC+'_name" placeholder="e.g. HQ London"/></div>'+
+  '<div class="field"><label>Country *</label><input type="text" data-hld="site'+sC+'_country" placeholder="e.g. United Kingdom"/></div>'+
+  '<div class="field"><label>Total Users *</label><input type="number" data-hld="site'+sC+'_users" placeholder="e.g. 250"/></div>'+
+  '<div class="field"><label>Site Type</label><select data-hld="site'+sC+'_type"><option>HQ</option><option>Regional Office</option><option>Branch</option><option>Data Centre</option><option>Remote/Home Hub</option><option>Manufacturing</option></select></div>'+
+  '<div class="field"><label>PSTN Strategy</label><select data-hld="site'+sC+'_pstn"><option>TBD</option><option>Cisco Calling Plan (CCP)</option><option>Cloud Connected PSTN</option><option>Premises-based (LGW)</option><option>PSTN via on-prem CUCM</option></select></div>'+
+  '<div class="field"><label>DID Range</label><input type="text" data-hld="site'+sC+'_did" placeholder="e.g. +44 20 7946 XXXX"/></div>'+
+  '<div class="field full"><label>Address (E.911 ESA)</label><input type="text" data-hld="site'+sC+'_address" placeholder="Street, City, Postcode"/></div>'+
+  '</div>';
+  c.appendChild(d);
+}
+function addTrunk(){
+  tC++;var c=document.getElementById('trunks-con');var d=document.createElement('div');
+  d.style.cssText='background:var(--surf2);border:1px solid var(--br);border-radius:var(--r);padding:12px;margin-bottom:8px;';
+  d.innerHTML='<div style="display:flex;justify-content:space-between;margin-bottom:8px;"><b style="font-size:11px;color:var(--amber)">Trunk '+tC+'</b><button class="btn btn-ghost btn-sm" onclick="this.closest(\'div\').remove()">✕</button></div>'+
+  '<div class="g3" style="gap:8px;">'+
+  '<div class="field"><label>Trunk Name *</label><input type="text" data-hld="trunk'+tC+'_name" placeholder="e.g. LGW-HQ-Primary"/></div>'+
+  '<div class="field"><label>Type</label><select data-hld="trunk'+tC+'_type"><option>Registration-based</option><option>Certificate-based (mTLS)</option><option>SIP Trunk (CUCM)</option><option>Cloud CCP</option></select></div>'+
+  '<div class="field"><label>Provider</label><input type="text" data-hld="trunk'+tC+'_prov" placeholder="e.g. BT SIP, Gamma"/></div>'+
+  '<div class="field"><label>Site</label><input type="text" data-hld="trunk'+tC+'_site" placeholder="e.g. HQ London"/></div>'+
+  '<div class="field"><label>Max Calls</label><input type="number" data-hld="trunk'+tC+'_calls" placeholder="e.g. 200"/></div>'+
+  '<div class="field"><label>Purpose</label><input type="text" data-hld="trunk'+tC+'_purpose" placeholder="e.g. Primary PSTN trunk"/></div></div>';
+  c.appendChild(d);
+}
+function addRG(){
+  rC++;var c=document.getElementById('rgs-con');var d=document.createElement('div');
+  d.style.cssText='background:var(--surf2);border:1px solid var(--br);border-radius:var(--r);padding:12px;margin-bottom:8px;';
+  d.innerHTML='<div style="display:flex;justify-content:space-between;margin-bottom:8px;"><b style="font-size:11px;color:var(--green)">Route Group '+rC+'</b><button class="btn btn-ghost btn-sm" onclick="this.closest(\'div\').remove()">✕</button></div>'+
+  '<div class="g2" style="gap:8px;">'+
+  '<div class="field"><label>Name *</label><input type="text" data-hld="rg'+rC+'_name" placeholder="e.g. RG-EMEA-Primary"/></div>'+
+  '<div class="field"><label>Trunks</label><input type="text" data-hld="rg'+rC+'_trunks" placeholder="e.g. LGW-HQ-1, LGW-HQ-2"/></div>'+
+  '<div class="field"><label>Policy</label><select data-hld="rg'+rC+'_policy"><option>Top Down</option><option>Circular</option><option>Longest Idle</option></select></div>'+
+  '<div class="field"><label>Purpose</label><input type="text" data-hld="rg'+rC+'_purpose" placeholder="e.g. EMEA outbound PSTN"/></div></div>';
+  c.appendChild(d);
+}
+function addDP(){
+  dpC++;var c=document.getElementById('dp-con');var d=document.createElement('div');
+  d.style.cssText='display:grid;grid-template-columns:2fr 2fr 2fr auto;gap:8px;align-items:end;margin-bottom:8px;';
+  d.innerHTML='<div class="field" style="margin:0"><label>Pattern *</label><input type="text" data-hld="dp'+dpC+'_pat" placeholder="+44XXXXXXXXXX"/></div>'+
+  '<div class="field" style="margin:0"><label>Route To</label><input type="text" data-hld="dp'+dpC+'_target" placeholder="RG-EMEA / AA"/></div>'+
+  '<div class="field" style="margin:0"><label>Type</label><input type="text" data-hld="dp'+dpC+'_type" placeholder="PSTN / Internal"/></div>'+
+  '<button class="btn btn-ghost btn-sm" style="margin-bottom:0;align-self:flex-end;" onclick="this.closest(\'div\').remove()">✕</button>';
+  c.appendChild(d);
+}
+function calcLive(){
+  var s=n('l-std'),p=n('l-pro'),ca=n('l-ca'),su=n('l-suite'),ws=n('l-ws');
+  var mt=(s*n('lp-std'))+(p*n('lp-pro'))+(ca*n('lp-ca'))+(su*n('lp-suite'))+(ws*n('lp-ws'));
+  var rlU=n('l-cucm')+n('l-turrets');
+  var rlP=parseFloat(sv('l-rl-pct')||0.15);
+  var rlL=Math.ceil(rlU*rlP);
+  var rlB=Math.ceil(rlL*1.2);
+  var rlC=rlL*n('l-rl-cost');
+  var grand=mt+rlC;
+  set('lout-mt','$'+Math.round(mt).toLocaleString());
+  set('lout-rl',rlL);set('lout-rlb',rlB);
+  set('lout-rl-cost','$'+Math.round(rlC).toLocaleString());
+  set('lout-grand','$'+Math.round(grand).toLocaleString());
+  set('lout-annual','$'+Math.round(grand*12).toLocaleString());
+  set('live-total','$'+Math.round(grand).toLocaleString());
+  set('live-annual','$'+Math.round(grand*12).toLocaleString());
+  set('live-rl',rlL);
+  var codec={'G.711 (87 kbps)':87,'G.722 (87 kbps)':87,'G.729 (24 kbps)':24,'Opus (50 kbps)':50}[sv('bw-codec')]||87;
+  var pct=parseFloat(sv('bw-pct')||0.15);
+  var hd=1+parseInt(sv('bw-hd')||25)/100;
+  var conc=Math.ceil(n('bw-users')*pct);
+  var voice=Math.ceil(conc*codec*hd);
+  var tot=voice;
+  set('bwout-v',voice+' kbps');
+  set('bwout-t',tot+' kbps');
+  set('live-bw',tot>0?tot+' kbps':'—');
+  var mtU=s+p+ca+su;
+  set('sum-cust',sv('p-customer')||'—');
+  set('sum-model',sv('p-model')||'—');
+  set('sum-sites',document.querySelectorAll('#sites-con .card').length||0);
+  set('sum-mt',mtU);set('sum-rl',rlL);
+  set('sum-bw',tot>0?tot+' kbps (~'+Math.ceil(tot/1000)+' Mbps)':'—');
+  set('sum-grand','$'+Math.round(grand).toLocaleString());
+  buildNav();
+}
+function exportHLD(){
+  var lines=['=== WEBEX CALLING HLD INTAKE ===','Generated: '+new Date().toLocaleString(),''];
+  document.querySelectorAll('[data-hld]').forEach(el=>{
+    var k=el.dataset.hld;
+    var v=el.type==='checkbox'?el.checked:el.value;
+    lines.push(k+': '+v);
+  });
+  var blob=new Blob([lines.join('\n')],{type:'text/plain'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='HLD_Intake_'+(sv('p-customer')||'Customer')+'.txt';a.click();
+}
+window.onload=function(){
+  document.getElementById('p-date').value=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
+  addSite();buildNav();calcLive();
+};
+</script>
+</body>
+</html>

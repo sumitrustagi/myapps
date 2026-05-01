@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CRAWLR — Site Monitor & Download Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0b0d10;--surface:#111318;--surface2:#161920;--card:#1e2230;
+  --border:#1c1f27;--border2:#252930;--text:#d8dce8;--dim:#6b7585;--muted:#2e333f;
+  --amber:#f5a623;--amber-bg:rgba(245,166,35,.08);--amber-bd:#6b4a0e;
+  --green:#22c997;--green-bg:rgba(34,201,151,.08);--green-bd:#0b5940;
+  --blue:#5b9cf6;--blue-bg:rgba(91,156,246,.08);--blue-bd:#1a3468;
+  --orange:#f97316;--orange-bg:rgba(249,115,22,.08);--orange-bd:#7c2d12;
+  --red:#f05252;--red-bg:rgba(240,82,82,.08);--red-bd:#7f1d1d;
+  --purple:#a78bfa;--purple-bg:rgba(167,139,250,.08);--purple-bd:#4c1d95;
+  --teal:#2dd4bf;--teal-bg:rgba(45,212,191,.08);--teal-bd:#134e4a;
+  --pink:#f472b6;--pink-bg:rgba(244,114,182,.08);--pink-bd:#831843;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Space Mono',monospace;font-size:12px}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),
+                   linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:48px 48px;opacity:.3}
+#app{position:relative;z-index:1;display:flex;flex-direction:column;height:100vh}
+
+/* Header */
+.hdr{display:flex;align-items:center;gap:14px;padding:10px 18px;
+  background:rgba(11,13,16,.96);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--border2);flex-shrink:0}
+.logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;
+  letter-spacing:5px;color:var(--amber);white-space:nowrap;
+  text-shadow:0 0 20px rgba(245,166,35,.3)}
+.logo em{color:var(--dim);font-style:normal;font-size:12px;letter-spacing:2px;vertical-align:middle}
+.url-row{flex:1;display:flex;gap:6px;max-width:580px}
+.url-inp{flex:1;background:var(--surface);border:1px solid var(--border2);
+  color:var(--text);padding:7px 12px;font-family:inherit;font-size:11px;
+  outline:none;transition:border .2s}
+.url-inp:focus{border-color:var(--amber)}
+.url-inp::placeholder{color:var(--muted)}
+.btn{padding:7px 14px;font-family:inherit;font-size:10px;font-weight:700;
+  letter-spacing:1px;cursor:pointer;border:none;white-space:nowrap;transition:all .15s}
+.btn-amber{background:var(--amber);color:#000}
+.btn-amber:hover{background:#fbbf24}
+.btn-amber:disabled{background:var(--muted);color:var(--dim);cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--dim);border:1px solid var(--border2)}
+.btn-ghost:hover{border-color:var(--amber);color:var(--amber)}
+.hdr-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted)}
+.dot.running{background:var(--amber);animation:blink 1.4s ease-in-out infinite}
+.dot.done{background:var(--green)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.status-txt{font-size:10px;color:var(--dim);letter-spacing:1px}
+.next-run{font-size:9px;color:var(--muted);border:1px solid var(--border);padding:3px 8px}
+
+/* Progress */
+.pbar-wrap{display:none;align-items:center;gap:12px;padding:6px 18px;
+  background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.pbar-wrap.show{display:flex}
+.pbar-track{flex:1;height:3px;background:var(--border2);overflow:hidden}
+.pbar-fill{height:100%;background:var(--amber);transition:width .4s;width:0}
+.pbar-label{font-size:10px;color:var(--dim);min-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Stats */
+.stats{display:flex;background:var(--border);border-bottom:1px solid var(--border);flex-shrink:0}
+.stat{flex:1;background:var(--surface);padding:11px 14px;cursor:pointer;
+  border-right:1px solid var(--border);transition:background .15s}
+.stat:last-child{border-right:0}
+.stat:hover,.stat.act{background:var(--surface2)}
+.stat-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:3px}
+.stat-val{font-family:'Syne',sans-serif;font-size:22px;font-weight:800}
+.stat.s-total .stat-val{color:var(--text)}
+.stat.s-new   .stat-val{color:var(--amber)}
+.stat.s-chg   .stat-val{color:var(--orange)}
+.stat.s-unch  .stat-val{color:var(--blue)}
+.stat.s-del   .stat-val{color:var(--red)}
+.stat.s-err   .stat-val{color:var(--purple)}
+.stat.s-asset .stat-val{color:var(--teal)}
+.stat-sub{font-size:9px;color:var(--muted);margin-top:2px}
+
+/* Body */
+.body{flex:1;display:flex;overflow:hidden;min-height:0}
+.left{flex:1;display:flex;flex-direction:column;border-right:1px solid var(--border);overflow:hidden}
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0}
+.tab{padding:9px 15px;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--dim);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
+.tab.act{color:var(--amber);border-bottom-color:var(--amber)}
+.tab:hover:not(.act){color:var(--text)}
+.pane{flex:1;display:none;flex-direction:column;overflow:hidden;min-height:0}
+.pane.act{display:flex}
+
+/* Auth panel */
+.auth-panel{background:var(--card);border:1px solid var(--border2);
+  margin:10px 14px;padding:14px;flex-shrink:0}
+.auth-title{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--amber);
+  margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.auth-title::before{content:'🔑';font-size:12px}
+.auth-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.auth-full{grid-column:1/-1}
+.auth-field label{display:block;font-size:9px;letter-spacing:1px;text-transform:uppercase;
+  color:var(--dim);margin-bottom:4px}
+.auth-field input,.auth-field select,.auth-field textarea{
+  width:100%;background:var(--surface);border:1px solid var(--border2);
+  color:var(--text);padding:6px 10px;font-family:inherit;font-size:11px;outline:none;
+  transition:border .2s}
+.auth-field input:focus,.auth-field select:focus,.auth-field textarea:focus{
+  border-color:var(--amber)}
+.auth-field select{cursor:pointer}
+.auth-field textarea{resize:vertical;min-height:52px;max-height:100px}
+.auth-row{display:flex;gap:8px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.auth-badge{font-size:9px;padding:2px 8px;border:1px solid var(--green-bd);
+  color:var(--green);background:var(--green-bg)}
+.auth-saved{font-size:9px;color:var(--green)}
+.auth-toggle{
+  font-size:9px;color:var(--amber);cursor:pointer;letter-spacing:1px;
+  background:none;border:none;font-family:inherit;text-transform:uppercase}
+
+/* Filter bar */
+.fbar{display:flex;align-items:center;gap:4px;flex-wrap:wrap;
+  padding:7px 12px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0}
+.flabel{font-size:9px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-right:3px}
+.fbtn{padding:3px 9px;font-family:inherit;font-size:9px;border:1px solid var(--border2);
+  background:transparent;color:var(--dim);cursor:pointer;letter-spacing:.5px;transition:all .15s}
+.fbtn:hover{border-color:var(--dim);color:var(--text)}
+.fbtn.act.f-all  {border-color:var(--text);color:var(--text);background:var(--border)}
+.fbtn.act.f-dl   {border-color:var(--amber);color:var(--amber)}
+.fbtn.act.f-chg  {border-color:var(--orange);color:var(--orange)}
+.fbtn.act.f-unch {border-color:var(--blue);color:var(--blue)}
+.fbtn.act.f-del  {border-color:var(--red);color:var(--red)}
+.fbtn.act.f-err  {border-color:var(--purple);color:var(--purple)}
+.art-count{margin-left:auto;font-size:10px;color:var(--muted)}
+
+/* Table */
+.tbl-wrap{flex:1;overflow-y:auto;min-height:0}
+.tbl-wrap::-webkit-scrollbar{width:4px}
+.tbl-wrap::-webkit-scrollbar-thumb{background:var(--border2)}
+table{width:100%;border-collapse:collapse}
+thead{position:sticky;top:0;background:var(--surface);z-index:5}
+th{padding:7px 10px;text-align:left;font-size:9px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--border);
+  white-space:nowrap;font-weight:400}
+td{padding:7px 10px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle}
+tr:hover td{background:rgba(255,255,255,.015)}
+.t-title{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.t-url  {max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.t-url a{color:var(--dim);text-decoration:none;font-size:10px}
+.t-url a:hover{color:var(--amber)}
+.badge{display:inline-block;padding:2px 7px;font-size:9px;font-weight:700;
+  letter-spacing:.8px;text-transform:uppercase;border:1px solid}
+.b-downloaded{color:var(--amber);border-color:var(--amber-bd);background:var(--amber-bg)}
+.b-changed   {color:var(--orange);border-color:var(--orange-bd);background:var(--orange-bg)}
+.b-unchanged {color:var(--blue);border-color:var(--blue-bd);background:var(--blue-bg)}
+.b-deleted   {color:var(--red);border-color:var(--red-bd);background:var(--red-bg)}
+.b-error     {color:var(--purple);border-color:var(--purple-bd);background:var(--purple-bg)}
+.b-discovered{color:var(--dim);border-color:var(--border2)}
+
+/* File type badges */
+.ft{display:inline-block;padding:1px 5px;font-size:8px;letter-spacing:.5px;
+    text-transform:uppercase;border:1px solid;margin-left:4px;vertical-align:middle}
+.ft-page    {color:var(--blue);border-color:var(--blue-bd)}
+.ft-document{color:var(--green);border-color:var(--green-bd)}
+.ft-video   {color:var(--pink);border-color:var(--pink-bd)}
+.ft-audio   {color:var(--teal);border-color:var(--teal-bd)}
+.ft-image   {color:var(--purple);border-color:var(--purple-bd)}
+.ft-archive {color:var(--orange);border-color:var(--orange-bd)}
+.ft-data    {color:var(--dim);border-color:var(--border2)}
+
+.rev{font-size:10px;color:var(--muted)}
+.rev.hi{color:var(--orange)}
+.dl-a{font-size:9px;padding:2px 7px;color:var(--muted);border:1px solid var(--border);
+  text-decoration:none;transition:all .15s;display:inline-block}
+.dl-a:hover{color:var(--amber);border-color:var(--amber)}
+.ts{font-size:10px;color:var(--dim)}
+.fsz{font-size:10px;color:var(--dim)}
+@keyframes hlrow{0%{background:rgba(245,166,35,.12)}100%{background:transparent}}
+.hl{animation:hlrow 2.5s ease}
+
+/* Sitemap */
+.sm-tree{flex:1;overflow-y:auto;padding:10px 14px}
+.sm-tree::-webkit-scrollbar{width:4px}
+.sm-tree::-webkit-scrollbar-thumb{background:var(--border2)}
+.sm-item{display:flex;align-items:center;gap:8px;padding:5px 0;
+  border-bottom:1px solid rgba(255,255,255,.025)}
+.sm-icon{width:14px;text-align:center;font-size:11px;flex-shrink:0}
+.sm-url{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}
+.sm-url a{color:var(--dim);text-decoration:none}
+.sm-url a:hover{color:var(--amber)}
+
+/* Sessions */
+.sess-list{flex:1;overflow-y:auto;padding:8px}
+.sess-list::-webkit-scrollbar{width:4px}
+.sess-list::-webkit-scrollbar-thumb{background:var(--border2)}
+.sess-item{border:1px solid var(--border);padding:11px 13px;margin-bottom:4px;
+  cursor:pointer;background:var(--surface);transition:all .15s}
+.sess-item:hover{border-color:var(--border2)}
+.sess-item.act{border-color:var(--amber)}
+.sess-url{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:5px;font-size:11px}
+.sess-meta{display:flex;gap:12px;font-size:10px;color:var(--muted)}
+.pill{display:inline-block;padding:1px 6px;font-size:9px;border:1px solid;vertical-align:middle}
+.pill-run{color:var(--amber);border-color:var(--amber-bd)}
+.pill-done{color:var(--green);border-color:var(--green-bd)}
+
+/* Schedule */
+.sched{flex:1;overflow-y:auto;padding:16px}
+.sched-form{display:flex;gap:6px;margin-bottom:14px}
+.sched-inp{flex:1;background:var(--surface);border:1px solid var(--border2);
+  color:var(--text);padding:7px 11px;font-family:inherit;font-size:11px;outline:none}
+.sched-inp:focus{border-color:var(--amber)}
+.section-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);margin-bottom:8px}
+.sched-item{border:1px solid var(--border);padding:11px 13px;margin-bottom:4px;
+  background:var(--surface);display:flex;align-items:center;gap:12px}
+.si-info{flex:1;overflow:hidden}
+.si-name{color:var(--text);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:3px}
+.si-meta{font-size:10px;color:var(--muted)}
+.sched-note{margin-top:16px;padding:13px;border:1px solid var(--border);background:var(--surface)}
+.sched-note li{font-size:11px;color:var(--dim);line-height:2;list-style:none;padding-left:4px}
+
+/* Right panel */
+.right{width:310px;flex-shrink:0;display:flex;flex-direction:column;
+  background:var(--surface);border-left:1px solid var(--border)}
+.log-hdr{padding:9px 14px;border-bottom:1px solid var(--border);
+  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);
+  display:flex;align-items:center;justify-content:space-between}
+.spin{display:inline-block;width:11px;height:11px;border:2px solid var(--border2);
+  border-top-color:var(--amber);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.log-feed{flex:1;overflow-y:auto;min-height:0}
+.log-feed::-webkit-scrollbar{width:3px}
+.log-feed::-webkit-scrollbar-thumb{background:var(--border)}
+.le{padding:5px 12px;border-bottom:1px solid rgba(255,255,255,.025);animation:lein .25s ease}
+@keyframes lein{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:none}}
+.le-time{color:var(--muted);font-size:9px;margin-right:5px}
+.le-msg{font-size:10px;line-height:1.5}
+.le-url{display:block;font-size:9px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.le.t-downloaded .le-msg{color:var(--amber)}
+.le.t-changed    .le-msg{color:var(--orange)}
+.le.t-unchanged  .le-msg{color:var(--dim)}
+.le.t-deleted    .le-msg{color:var(--red)}
+.le.t-error      .le-msg{color:var(--purple)}
+.le.t-phase      .le-msg{color:var(--green);font-weight:700}
+.le.t-complete   .le-msg{color:var(--green)}
+.le.t-login      .le-msg{color:var(--teal)}
+.le.t-found      .le-msg{color:var(--muted)}
+
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:50px 20px;gap:8px;text-align:center}
+.empty-ico{font-size:28px;opacity:.25;margin-bottom:6px}
+.empty-ttl{font-family:'Syne',sans-serif;font-size:15px;color:var(--dim)}
+.empty-sub{font-size:10px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- Header -->
+<header class="hdr">
+  <div class="logo">CRAWLR <em>v2</em></div>
+  <div class="url-row">
+    <input class="url-inp" id="urlInp" type="url" placeholder="https://docs.example.com"
+           autocomplete="off" spellcheck="false">
+    <button class="btn btn-amber" id="startBtn" onclick="startCrawl()">▶ START</button>
+  </div>
+  <div class="hdr-right">
+    <div class="dot idle" id="dot"></div>
+    <span class="status-txt" id="statusTxt">IDLE</span>
+    <span class="next-run" id="nextRun">NEXT: –</span>
+  </div>
+</header>
+
+<!-- Progress -->
+<div class="pbar-wrap" id="pbar">
+  <div class="pbar-track"><div class="pbar-fill" id="pbarFill"></div></div>
+  <span class="pbar-label" id="pbarLabel">Starting...</span>
+</div>
+
+<!-- Stats -->
+<div class="stats">
+  <div class="stat s-total" onclick="setFilter('all')">
+    <div class="stat-lbl">Total</div><div class="stat-val" id="stTotal">0</div>
+    <div class="stat-sub">discovered</div>
+  </div>
+  <div class="stat s-new" onclick="setFilter('downloaded')">
+    <div class="stat-lbl">New</div><div class="stat-val" id="stNew">0</div>
+    <div class="stat-sub">downloaded</div>
+  </div>
+  <div class="stat s-chg" onclick="setFilter('changed')">
+    <div class="stat-lbl">Changed</div><div class="stat-val" id="stChg">0</div>
+    <div class="stat-sub">updated</div>
+  </div>
+  <div class="stat s-unch" onclick="setFilter('unchanged')">
+    <div class="stat-lbl">Unchanged</div><div class="stat-val" id="stUnch">0</div>
+    <div class="stat-sub">same</div>
+  </div>
+  <div class="stat s-asset" onclick="setFilter('all')">
+    <div class="stat-lbl">Assets</div><div class="stat-val" id="stAssets">0</div>
+    <div class="stat-sub">files</div>
+  </div>
+  <div class="stat s-del" onclick="setFilter('deleted')">
+    <div class="stat-lbl">Deleted</div><div class="stat-val" id="stDel">0</div>
+    <div class="stat-sub">removed</div>
+  </div>
+  <div class="stat s-err" onclick="setFilter('error')">
+    <div class="stat-lbl">Errors</div><div class="stat-val" id="stErr">0</div>
+    <div class="stat-sub">failed</div>
+  </div>
+</div>
+
+<div class="body">
+<div class="left">
+  <div class="tabs">
+    <div class="tab act" id="tab-articles" onclick="switchTab('articles')">Articles</div>
+    <div class="tab" id="tab-sitemap"   onclick="switchTab('sitemap')">Sitemap</div>
+    <div class="tab" id="tab-sessions"  onclick="switchTab('sessions')">Sessions</div>
+    <div class="tab" id="tab-schedule"  onclick="switchTab('schedule')">Schedule</div>
+  </div>
+
+  <!-- Articles pane -->
+  <div class="pane act" id="pane-articles">
+
+    <!-- Auth panel -->
+    <div class="auth-panel" id="authPanel">
+      <div class="auth-title">
+        Site Authentication
+        <span style="margin-left:auto">
+          <button class="auth-toggle" onclick="toggleAuth()">▾ EXPAND</button>
+        </span>
+      </div>
+      <div id="authFields" style="display:none">
+        <div class="auth-grid">
+          <div class="auth-field">
+            <label>Auth Type</label>
+            <select id="authType" onchange="onAuthTypeChange()">
+              <option value="none">None</option>
+              <option value="form">Form Login (POST)</option>
+              <option value="basic">HTTP Basic Auth</option>
+              <option value="token">Bearer Token</option>
+              <option value="cookie">Cookie / Session</option>
+            </select>
+          </div>
+          <div class="auth-field" id="fieldUser">
+            <label>Username</label>
+            <input type="text" id="authUser" placeholder="username or email" autocomplete="off">
+          </div>
+          <div class="auth-field" id="fieldPass">
+            <label>Password</label>
+            <input type="password" id="authPass" placeholder="••••••••" autocomplete="new-password">
+          </div>
+          <div class="auth-field auth-full" id="fieldLoginUrl" style="display:none">
+            <label>Login URL (leave blank to auto-detect)</label>
+            <input type="url" id="authLoginUrl" placeholder="https://example.com/login">
+          </div>
+          <div class="auth-field" id="fieldUserField" style="display:none">
+            <label>Username Field Name</label>
+            <input type="text" id="authUserField" value="username" placeholder="username">
+          </div>
+          <div class="auth-field" id="fieldPassField" style="display:none">
+            <label>Password Field Name</label>
+            <input type="text" id="authPassField" value="password" placeholder="password">
+          </div>
+          <div class="auth-field auth-full" id="fieldToken" style="display:none">
+            <label>Bearer Token</label>
+            <input type="password" id="authToken" placeholder="eyJhbGciOi..." autocomplete="off">
+          </div>
+          <div class="auth-field auth-full" id="fieldCookies" style="display:none">
+            <label>Cookies (Name=Value; Name2=Value2 or JSON array)</label>
+            <textarea id="authCookies" placeholder='session_id=abc123; token=xyz  — or  [{"name":"session","value":"abc"}]'></textarea>
+          </div>
+          <div class="auth-field auth-full" id="fieldExtra" style="display:none">
+            <label>Extra Form Fields (key=value&key2=value2 or JSON)</label>
+            <input type="text" id="authExtra" placeholder='remember_me=1&domain=corp'>
+          </div>
+        </div>
+        <div class="auth-row">
+          <button class="btn btn-amber" style="font-size:9px;padding:4px 10px"
+                  onclick="saveAuth()">💾 Save Auth for this Site</button>
+          <button class="btn btn-ghost" style="font-size:9px;padding:4px 10px"
+                  onclick="clearAuth()">✕ Clear</button>
+          <span class="auth-saved" id="authSaved"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="fbar">
+      <span class="flabel">Filter:</span>
+      <button class="fbtn act f-all"  id="fb-all"  onclick="setFilter('all')">All</button>
+      <button class="fbtn f-dl"       id="fb-dl"   onclick="setFilter('downloaded')">↓ New</button>
+      <button class="fbtn f-chg"      id="fb-chg"  onclick="setFilter('changed')">↻ Changed</button>
+      <button class="fbtn f-unch"     id="fb-unch" onclick="setFilter('unchanged')">✓ Same</button>
+      <button class="fbtn f-del"      id="fb-del"  onclick="setFilter('deleted')">✕ Deleted</button>
+      <button class="fbtn f-err"      id="fb-err"  onclick="setFilter('error')">! Error</button>
+      <span class="art-count" id="artCount">—</span>
+    </div>
+
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th><th>Type</th><th>Title / Filename</th>
+            <th>URL</th><th>Size</th><th>Rev</th><th>Last Checked</th><th>Download</th>
+          </tr>
+        </thead>
+        <tbody id="artBody">
+          <tr><td colspan="8"><div class="empty">
+            <div class="empty-ico">🕷️</div>
+            <div class="empty-ttl">No content yet</div>
+            <div class="empty-sub">Enter a URL and click START to crawl & download</div>
+          </div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Sitemap pane -->
+  <div class="pane" id="pane-sitemap">
+    <div class="sm-tree" id="smTree">
+      <div class="empty"><div class="empty-ico">🗺️</div>
+        <div class="empty-ttl">No sitemap yet</div></div>
+    </div>
+  </div>
+
+  <!-- Sessions pane -->
+  <div class="pane" id="pane-sessions">
+    <div class="sess-list" id="sessList">
+      <div class="empty"><div class="empty-ico">📋</div>
+        <div class="empty-ttl">No sessions</div></div>
+    </div>
+  </div>
+
+  <!-- Schedule pane -->
+  <div class="pane" id="pane-schedule">
+    <div class="sched">
+      <div class="section-lbl">Add site to weekly crawl</div>
+      <div class="sched-form">
+        <input class="sched-inp" id="schedUrl"  type="url" placeholder="https://docs.example.com" style="flex:2">
+        <input class="sched-inp" id="schedName" type="text" placeholder="Name (optional)">
+        <button class="btn btn-amber" onclick="addSchedule()">+ ADD</button>
+      </div>
+      <div class="section-lbl" style="margin-top:4px">Scheduled sites</div>
+      <div id="schedList"><div class="empty"><div class="empty-ico">⏱️</div>
+        <div class="empty-ttl">No sites scheduled</div></div></div>
+      <div class="sched-note">
+        <div class="section-lbl" style="margin-bottom:6px">Notes</div>
+        <ul>
+          <li>✓ Auto-runs every Sunday at 02:00 UTC</li>
+          <li>✓ Downloads new &amp; changed content only</li>
+          <li>✓ Saves pages→PDF, documents, videos, audio, images</li>
+          <li>✓ Auth credentials saved per-site and reused</li>
+          <li>✓ Deleted pages removed from sitemap</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Right: log -->
+<div class="right">
+  <div class="log-hdr">
+    <span>Activity Log</span>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="spin" id="spinEl" style="display:none"></div>
+      <button class="btn btn-ghost" style="font-size:9px;padding:2px 8px" onclick="clearLog()">CLEAR</button>
+    </div>
+  </div>
+  <div class="log-feed" id="logFeed">
+    <div class="le t-phase"><span class="le-time">–</span>
+      <span class="le-msg">Waiting for crawl…</span></div>
+  </div>
+</div>
+</div>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+let curSession = null, curFilter = 'all', evtSrc = null;
+let crawling = false, _sessions = [];
+let _authExpanded = false;
+
+// ── Boot ───────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  connectSSE(); loadSessions(); loadScheduled(); loadSchedulerStatus();
+  id('urlInp').addEventListener('keydown', e => { if(e.key==='Enter') startCrawl(); });
+  id('urlInp').addEventListener('blur', () => {
+    const url = id('urlInp').value.trim();
+    if (url) loadSavedAuth(url);
+  });
+  onAuthTypeChange();
+});
+
+// ── SSE ────────────────────────────────────────────────────────────────────
+function connectSSE() {
+  if (evtSrc) evtSrc.close();
+  evtSrc = new EventSource('/api/stream');
+  evtSrc.onmessage = e => { try { handleEvt(JSON.parse(e.data)); } catch(_){} };
+  evtSrc.onerror   = () => setTimeout(connectSSE, 3000);
+}
+
+function handleEvt({type, data}) {
+  switch(type) {
+    case 'crawl_started':      onStarted(data);   break;
+    case 'phase_change':       onPhase(data);     break;
+    case 'url_found':          onFound(data);     break;
+    case 'discovery_complete': addLog('phase', data.message, ''); break;
+    case 'article_downloaded': onArticle(data,'downloaded'); break;
+    case 'article_changed':    onArticle(data,'changed');    break;
+    case 'article_unchanged':  onArticle(data,'unchanged');  break;
+    case 'article_error':      onArticle(data,'error');      break;
+    case 'articles_deleted':   addLog('deleted', data.message, ''); break;
+    case 'crawl_complete':     onComplete(data);  break;
+  }
+}
+
+// ── Crawl events ───────────────────────────────────────────────────────────
+function onStarted(d) {
+  crawling = true;
+  curSession = {id: d.session_id, base_url: d.url};
+  setDot('running'); setStatus('CRAWLING');
+  showPbar(true); setPbar(0,'Initialising…');
+  show('spinEl'); resetStats();
+  addLog('phase', `▶ Started: ${d.url}`, d.url);
+  loadSessions();
+}
+function onPhase(d) {
+  addLog(d.phase === 'login' ? 'login' : 'phase', d.message, '');
+  const labels = {discovery:'DISCOVERING', processing:'DOWNLOADING', login:'LOGGING IN'};
+  setStatus(labels[d.phase] || d.phase.toUpperCase());
+}
+function onFound(d)  { setPbar(0,`Discovering… (${d.total} found)`); addLog('found', d.message, d.url); }
+function onArticle(d, status) {
+  addLog(status==='error'?'error':status, d.message||d.title, d.url);
+  if (d.progress !== undefined) setPbar(d.progress, `Downloading… ${d.progress}%`);
+  if (curSession && d.session_id===curSession.id) { refreshArticles(); refreshStats(); }
+}
+function onComplete(d) {
+  crawling = false; showPbar(false);
+  setDot('done'); setStatus('COMPLETE'); hide('spinEl');
+  addLog('complete', d.message, '');
+  if (d.session_id) {
+    if (!curSession) curSession = {id: d.session_id};
+    curSession.id = d.session_id;
+    refreshArticles(); refreshStats(); loadSessions();
+  }
+}
+
+// ── Actions ────────────────────────────────────────────────────────────────
+async function startCrawl() {
+  const url = id('urlInp').value.trim();
+  if (!url) { id('urlInp').focus(); return; }
+  const btn = id('startBtn');
+  btn.disabled = true; btn.textContent = '⏳ STARTING…';
+
+  const body = {url, ...collectAuth()};
+  try {
+    const r = await api('/api/crawl/start', body);
+    if (r.error) { alert(r.error); }
+  } catch(e) { alert('Error: '+e.message); }
+  finally { btn.disabled=false; btn.textContent='▶ START'; }
+}
+
+// ── Auth panel ─────────────────────────────────────────────────────────────
+function toggleAuth() {
+  _authExpanded = !_authExpanded;
+  id('authFields').style.display = _authExpanded ? '' : 'none';
+  id('authPanel').querySelector('.auth-toggle').textContent =
+    _authExpanded ? '▴ COLLAPSE' : '▾ EXPAND';
+}
+
+function onAuthTypeChange() {
+  const t = id('authType').value;
+  const show = (elId, cond) => id(elId).style.display = cond ? '' : 'none';
+  show('fieldUser',      ['form','basic'].includes(t));
+  show('fieldPass',      ['form','basic'].includes(t));
+  show('fieldLoginUrl',  t === 'form');
+  show('fieldUserField', t === 'form');
+  show('fieldPassField', t === 'form');
+  show('fieldToken',     t === 'token');
+  show('fieldCookies',   t === 'cookie');
+  show('fieldExtra',     t === 'form');
+  // Expand panel automatically if auth type selected
+  if (t !== 'none' && !_authExpanded) toggleAuth();
+}
+
+function collectAuth() {
+  const t = id('authType').value;
+  if (t === 'none') return {auth_type:'none'};
+  return {
+    auth_type:        t,
+    username:         id('authUser').value.trim(),
+    password:         id('authPass').value,
+    login_url:        id('authLoginUrl').value.trim(),
+    login_user_field: id('authUserField').value.trim() || 'username',
+    login_pass_field: id('authPassField').value.trim() || 'password',
+    token:            id('authToken').value.trim(),
+    cookies:          id('authCookies').value.trim(),
+    extra_fields:     id('authExtra').value.trim(),
+  };
+}
+
+async function saveAuth() {
+  const url = id('urlInp').value.trim();
+  if (!url) { id('authSaved').textContent = '⚠ Enter URL first'; return; }
+  const body = {base_url: url.startsWith('http')?url:'https://'+url, ...collectAuth()};
+  await api('/api/auth', body);
+  id('authSaved').textContent = '✔ Saved';
+  setTimeout(() => id('authSaved').textContent='', 3000);
+}
+
+function clearAuth() {
+  ['authType','authLoginUrl','authUserField','authPassField',
+   'authToken','authCookies','authExtra'].forEach(i => {
+    const el = id(i); if(el) el.value = i==='authType'?'none':'';
+  });
+  ['authUser','authPass'].forEach(i => id(i).value='');
+  onAuthTypeChange();
+}
+
+async function loadSavedAuth(rawUrl) {
+  const url = rawUrl.startsWith('http') ? rawUrl : 'https://'+rawUrl;
+  try {
+    const a = await get(`/api/auth/${encodeURIComponent(url)}`);
+    if (a && a.auth_type && a.auth_type !== 'none') {
+      id('authType').value = a.auth_type;
+      if (a.username)          id('authUser').value       = a.username;
+      if (a.login_url)         id('authLoginUrl').value   = a.login_url;
+      if (a.login_user_field)  id('authUserField').value  = a.login_user_field;
+      if (a.login_pass_field)  id('authPassField').value  = a.login_pass_field;
+      onAuthTypeChange();
+      if (!_authExpanded) toggleAuth();
+      id('authSaved').textContent = '✔ Auth loaded';
+      setTimeout(() => id('authSaved').textContent='', 3000);
+    }
+  } catch(_) {}
+}
+
+// ── Data loading ───────────────────────────────────────────────────────────
+async function loadSessions() {
+  _sessions = await get('/api/sessions');
+  renderSessions(_sessions);
+  if (_sessions.length && !curSession) selectSession(_sessions[0]);
+}
+
+async function refreshArticles() {
+  if (!curSession) return;
+  const qs = curFilter !== 'all' ? `?status=${curFilter}` : '';
+  const arts = await get(`/api/sessions/${curSession.id}/articles${qs}`);
+  renderArticles(arts);
+}
+
+async function refreshStats() {
+  if (!curSession) return;
+  const s = await get(`/api/sessions/${curSession.id}/stats`);
+  id('stTotal').textContent  = s.total     || 0;
+  id('stNew').textContent    = s.downloaded|| 0;
+  id('stChg').textContent    = s.changed   || 0;
+  id('stUnch').textContent   = s.unchanged || 0;
+  id('stAssets').textContent = s.assets    || 0;
+  id('stDel').textContent    = s.deleted   || 0;
+  id('stErr').textContent    = s.errors    || 0;
+}
+
+async function loadScheduled() {
+  const sites = await get('/api/schedule/sites');
+  renderScheduled(sites.filter(s=>s.enabled));
+}
+
+async function loadSchedulerStatus() {
+  const d = await get('/api/scheduler/status');
+  if (d.jobs && d.jobs[0] && d.jobs[0].next_run) {
+    const dt = new Date(d.jobs[0].next_run);
+    id('nextRun').textContent = `NEXT: ${dt.toLocaleDateString()} ${dt.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+  }
+}
+
+function selectSession(s) {
+  curSession = s; setFilter('all', true);
+  refreshArticles(); refreshStats(); renderSessions(_sessions);
+}
+
+function setFilter(f, silent) {
+  curFilter = f;
+  const map = {all:'all',dl:'downloaded',chg:'changed',unch:'unchanged',del:'deleted',err:'error'};
+  ['all','dl','chg','unch','del','err'].forEach(k =>
+    id(`fb-${k}`)?.classList.toggle('act', map[k]===f));
+  if (!silent) refreshArticles();
+}
+
+// ── Tab switching ──────────────────────────────────────────────────────────
+function switchTab(name) {
+  ['articles','sitemap','sessions','schedule'].forEach(n => {
+    id(`tab-${n}`)?.classList.toggle('act', n===name);
+    id(`pane-${n}`)?.classList.toggle('act', n===name);
+  });
+  if (name==='sitemap')  loadSitemap();
+  if (name==='sessions') loadSessions();
+  if (name==='schedule') loadScheduled();
+}
+
+async function loadSitemap() {
+  if (!curSession) return;
+  const arts = await get(`/api/sessions/${curSession.id}/articles`);
+  renderSitemap(arts);
+}
+
+// ── Rendering ──────────────────────────────────────────────────────────────
+const FT_ICON = {page:'📄',document:'📎',video:'🎬',audio:'🎵',image:'🖼',archive:'📦',data:'📊'};
+const FT_LABEL = {page:'Page',document:'Doc',video:'Video',audio:'Audio',image:'Image',archive:'ZIP',data:'Data'};
+
+function ftBadge(ft) {
+  const f = ft||'page';
+  return `<span class="ft ft-${f}">${FT_LABEL[f]||f}</span>`;
+}
+
+function renderArticles(arts) {
+  const tbody = id('artBody');
+  id('artCount').textContent = `${arts.length} item${arts.length!==1?'s':''}`;
+  if (!arts.length) {
+    tbody.innerHTML = `<tr><td colspan="8"><div class="empty">
+      <div class="empty-ico">📭</div><div class="empty-ttl">No items</div>
+      <div class="empty-sub">No content matches this filter</div>
+    </div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = arts.map(a => {
+    const st   = a.is_deleted ? 'deleted' : a.status;
+    const ft   = a.file_type || 'page';
+    const rev  = a.revision || 1;
+    const size = a.file_size ? fmtSize(a.file_size) : '–';
+    const dlPath = a.download_path || a.pdf_path;
+    const dlHref = dlPath ? `/pdfs/${encodeURIComponent(dlPath.replace(/^.*?pdfs[/\\]/,''))}` : null;
+    const dlBtn  = dlHref
+      ? `<a class="dl-a" href="${h(dlHref)}" target="_blank">${FT_ICON[ft]||'↓'} Open</a>`
+      : '–';
+    return `<tr class="${st==='downloaded'?'hl':''}">
+      <td><span class="badge b-${st}">${st}</span></td>
+      <td>${ftBadge(ft)}</td>
+      <td><div class="t-title" title="${h(a.title)}">${h(a.title||'Untitled')}</div></td>
+      <td><div class="t-url"><a href="${h(a.url)}" target="_blank">${h(a.url)}</a></div></td>
+      <td><span class="fsz">${size}</span></td>
+      <td><span class="rev${rev>1?' hi':''}">${rev}</span></td>
+      <td><span class="ts">${fmtDate(a.last_checked)}</span></td>
+      <td>${dlBtn}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderSitemap(arts) {
+  const tree = id('smTree');
+  const live = arts.filter(a=>!a.is_deleted).sort((a,b)=>a.url.localeCompare(b.url));
+  if (!live.length) {
+    tree.innerHTML=`<div class="empty"><div class="empty-ico">🗺️</div><div class="empty-ttl">Empty</div></div>`;
+    return;
+  }
+  const iconMap={downloaded:'↓',changed:'↻',unchanged:'○',error:'!'};
+  const colMap ={downloaded:'var(--amber)',changed:'var(--orange)',unchanged:'var(--muted)',
+                  error:'var(--purple)',deleted:'var(--red)'};
+  tree.innerHTML = live.map(a => {
+    const ic = iconMap[a.status]||'○'; const cl = colMap[a.status]||'var(--dim)';
+    return `<div class="sm-item">
+      <span class="sm-icon" style="color:${cl}">${FT_ICON[a.file_type]||ic}</span>
+      <div class="sm-url"><a href="${h(a.url)}" target="_blank">${h(a.url)}</a></div>
+      <span style="font-size:9px;color:${cl}">${a.status}</span>
+      ${ftBadge(a.file_type)}
+    </div>`;
+  }).join('');
+}
+
+function renderSessions(sessions) {
+  const list = id('sessList');
+  if (!sessions.length) {
+    list.innerHTML=`<div class="empty"><div class="empty-ico">📋</div><div class="empty-ttl">No sessions</div></div>`;
+    return;
+  }
+  list.innerHTML = sessions.map(s => {
+    const isAct = curSession && s.id===curSession.id;
+    const pill = s.status==='running'
+      ? '<span class="pill pill-run">RUNNING</span>'
+      : '<span class="pill pill-done">DONE</span>';
+    return `<div class="sess-item${isAct?' act':''}" onclick="selectSessionById(${s.id})">
+      <div class="sess-url" title="${h(s.base_url)}">${h(s.base_url)}</div>
+      <div class="sess-meta"><b>${fmtDate(s.started_at)}</b>
+        <b>${s.total_articles||0} items</b>${pill}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderScheduled(sites) {
+  const list = id('schedList');
+  if (!sites.length) {
+    list.innerHTML=`<div class="empty"><div class="empty-ico">⏱️</div><div class="empty-ttl">None</div></div>`;
+    return;
+  }
+  list.innerHTML = sites.map(s => `
+    <div class="sched-item">
+      <div class="si-info">
+        <div class="si-name">${h(s.name||s.url)}</div>
+        <div class="si-meta">${h(s.url)} · Last: ${s.last_run?fmtDate(s.last_run):'Never'}</div>
+      </div>
+      <button class="btn btn-ghost" style="font-size:9px;padding:4px 9px"
+              onclick="runNow('${h(s.url)}')">▶ NOW</button>
+      <button class="btn btn-ghost" style="font-size:9px;padding:4px 9px"
+              onclick="removeSchedule('${h(s.url)}')">✕</button>
+    </div>`).join('');
+}
+
+// ── Schedule actions ───────────────────────────────────────────────────────
+async function addSchedule() {
+  const url = id('schedUrl').value.trim(), name = id('schedName').value.trim();
+  if (!url) return;
+  await api('/api/schedule/add', {url, name});
+  id('schedUrl').value=''; id('schedName').value='';
+  addLog('phase', `Scheduled: ${url}`, url); loadScheduled();
+}
+async function runNow(url) {
+  const r = await api('/api/schedule/run-now', {url});
+  addLog('phase', `Manual crawl triggered for ${url}`, url);
+}
+async function removeSchedule(url) { await api('/api/schedule/remove', {url}); loadScheduled(); }
+
+// ── Log ────────────────────────────────────────────────────────────────────
+function addLog(type, msg, url) {
+  const feed = id('logFeed');
+  const now  = new Date().toLocaleTimeString([], {hour12:false});
+  const el   = document.createElement('div');
+  el.className = `le t-${type}`;
+  el.innerHTML = `<span class="le-time">${now}</span><span class="le-msg">${h(msg)}</span>`
+    + (url ? `<span class="le-url">${h(url)}</span>` : '');
+  feed.insertBefore(el, feed.firstChild);
+  while (feed.children.length > 600) feed.removeChild(feed.lastChild);
+}
+function clearLog() { id('logFeed').innerHTML=''; }
+
+// ── UI helpers ─────────────────────────────────────────────────────────────
+function resetStats() {
+  ['stTotal','stNew','stChg','stUnch','stAssets','stDel','stErr']
+    .forEach(k=>id(k).textContent='0');
+}
+function showPbar(v) { id('pbar').classList.toggle('show',v); }
+function setPbar(pct,lbl) { id('pbarFill').style.width=`${pct}%`; id('pbarLabel').textContent=lbl; }
+function setDot(s)     { id('dot').className=`dot ${s}`; }
+function setStatus(s)  { id('statusTxt').textContent=s; }
+function show(el)      { id(el).style.display='inline-block'; }
+function hide(el)      { id(el).style.display='none'; }
+function selectSessionById(sid) { const s=_sessions.find(x=>x.id===sid); if(s) selectSession(s); }
+
+const id = s => document.getElementById(s);
+function h(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function fmtDate(s) {
+  if (!s) return '–';
+  try { const d=new Date(s); return isNaN(d)?s:d.toLocaleDateString()+' '+d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}); }
+  catch { return s; }
+}
+function fmtSize(n) {
+  if (!n || n===0) return '–';
+  if (n<1024)        return `${n} B`;
+  if (n<1048576)     return `${(n/1024).toFixed(1)} KB`;
+  if (n<1073741824)  return `${(n/1048576).toFixed(1)} MB`;
+  return `${(n/1073741824).toFixed(2)} GB`;
+}
+async function get(url) { try { return await (await fetch(url)).json(); } catch { return {}; } }
+async function api(url, body) {
+  const r = await fetch(url, {method:'POST',
+    headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  return r.json();
+}
+setInterval(()=>{ if(crawling && curSession) refreshStats(); }, 6000);
+</script>
+</body>
+</html>

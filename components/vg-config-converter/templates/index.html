@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VG Config Converter — VG350 to VG410/VG420</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-label="VG Converter">
+          <rect width="32" height="32" rx="8" fill="var(--primary)"/>
+          <rect x="6" y="8" width="8" height="4" rx="1.5" fill="white" opacity="0.9"/>
+          <rect x="6" y="14" width="8" height="4" rx="1.5" fill="white" opacity="0.6"/>
+          <rect x="6" y="20" width="8" height="4" rx="1.5" fill="white" opacity="0.3"/>
+          <path d="M19 10 L26 16 L19 22" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="logo-text">VG Config Converter</span>
+      </div>
+      <button class="theme-toggle" data-theme-toggle aria-label="Switch theme">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="5"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="hero card">
+      <div class="badge">Cisco Voice Gateway Migration</div>
+      <h1>VG350 → VG410 / VG420 Config Converter</h1>
+      <p>Upload or paste an existing VG350 running-config. The tool remaps legacy <code>slot/subslot/port</code> references into flat <code>0/0/N</code> numbering — and generates a sortable Excel workbook with <strong>OLD_Config</strong> and <strong>NEW_Config</strong> sheets mapping each port to its extension.</p>
+    </div>
+
+    <div class="two-col">
+      <!-- Form -->
+      <div class="card panel">
+        <h2>Conversion settings</h2>
+        <form method="post" action="/convert" enctype="multipart/form-data" id="convertForm">
+
+          <div class="section-label">Target gateway</div>
+          <div class="row3">
+            <div class="field">
+              <label for="target_model">Target model</label>
+              <select name="target_model" id="target_model">
+                <option value="VG420-84">VG420 — 84 ports</option>
+                <option value="VG420-144">VG420 — 144 ports</option>
+                <option value="VG410-24">VG410 — 24 ports</option>
+                <option value="VG410-48">VG410 — 48 ports</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="old_base_slot">Old base slot</label>
+              <input type="number" name="old_base_slot" id="old_base_slot" value="0" min="0">
+            </div>
+            <div class="field">
+              <label for="old_ports_per_module">Ports per old module</label>
+              <input type="number" name="old_ports_per_module" id="old_ports_per_module" value="24" min="1">
+            </div>
+          </div>
+
+          <div class="section-label">Old device identity</div>
+          <div class="field">
+            <label for="old_hostname_hint">Old hostname (for Excel label)</label>
+            <input type="text" name="old_hostname_hint" id="old_hostname_hint" placeholder="e.g. BRU-VG350-01">
+          </div>
+
+          <div class="section-label">New device identity</div>
+          <div class="row2">
+            <div class="field">
+              <label for="new_hostname">New hostname</label>
+              <input type="text" name="new_hostname" id="new_hostname" placeholder="e.g. BRU-VG420-01">
+            </div>
+            <div class="field">
+              <label for="new_ip">New management IP</label>
+              <input type="text" name="new_ip" id="new_ip" placeholder="e.g. 10.10.10.20">
+            </div>
+          </div>
+          <div class="row2">
+            <div class="field">
+              <label for="new_mask">Subnet mask</label>
+              <input type="text" name="new_mask" id="new_mask" value="255.255.255.0">
+            </div>
+            <div class="field">
+              <label for="interface_name">Management interface</label>
+              <input type="text" name="interface_name" id="interface_name" value="GigabitEthernet0/0/0">
+            </div>
+          </div>
+
+          <div class="section-label">Old config input</div>
+          <div class="field">
+            <label for="config_file">Upload config file (.txt / .cfg)</label>
+            <div class="file-drop" id="fileDrop">
+              <input type="file" name="config_file" id="config_file" accept=".txt,.cfg,.conf">
+              <span id="fileLabel">Drag &amp; drop or <u>browse</u></span>
+            </div>
+          </div>
+          <div class="field">
+            <label for="config_text">Or paste running-config</label>
+            <textarea name="config_text" id="config_text" rows="12" placeholder="Paste your VG350 running-config here..."></textarea>
+          </div>
+
+          <div class="actions">
+            <button type="submit" class="btn-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+              Generate config
+            </button>
+            <button type="reset" class="btn-ghost">Clear</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Info panel -->
+      <div class="card panel info-panel">
+        <h2>Port mapping logic</h2>
+        <div class="info-box">
+          <p><strong>Legacy format:</strong> <code>slot/subslot/port</code><br>
+          e.g. <code>0/2/13</code> with base slot=0, 24 ports/module</p>
+          <p><strong>New format:</strong> <code>0/0/N</code><br>
+          N = (module_slot − base_slot) × ports_per_module + port<br>
+          → <code>0/0/61</code></p>
+        </div>
+
+        <h3>Supported models</h3>
+        <table class="info-table">
+          <thead><tr><th>Model</th><th>Max FXS ports</th></tr></thead>
+          <tbody>
+            <tr><td>VG420</td><td>84 or 144</td></tr>
+            <tr><td>VG410</td><td>24 or 48</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Excel workbook output</h3>
+        <ul class="check-list">
+          <li><strong>OLD_Config</strong> sheet — legacy port → extension</li>
+          <li><strong>NEW_Config</strong> sheet — new port → extension</li>
+          <li>Sorted by port number, filterable table</li>
+          <li>Notes column for your annotations</li>
+        </ul>
+
+        <h3>Manual review required</h3>
+        <ul class="warn-list">
+          <li>SM-D / hardware module declarations</li>
+          <li>SCCP and MGCP client configuration</li>
+          <li>Port-specific supervisory disconnect</li>
+          <li>Any platform-specific commands</li>
+        </ul>
+
+        {% if port_count and port_count > 0 %}
+        <div class="stat-box">
+          <span class="stat-num">{{ port_count }}</span>
+          <span class="stat-label">ports remapped</span>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Output section -->
+    {% if result %}
+    <div class="card panel output-section">
+      <div class="output-header">
+        <h2>Generated configuration</h2>
+        <div class="actions">
+          <!-- Download .txt -->
+          <form method="post" action="/download" style="display:inline">
+            <input type="hidden" name="content" value="{{ result_hidden }}">
+            <button type="submit" class="btn-secondary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download config .txt
+            </button>
+          </form>
+          <!-- Download .xlsx -->
+          {% if show_xlsx %}
+          <form method="post" action="/download_xlsx" style="display:inline">
+            <input type="hidden" name="old_cfg"      value="{{ old_cfg_hidden }}">
+            <input type="hidden" name="new_cfg"      value="{{ new_cfg_hidden }}">
+            <input type="hidden" name="old_hostname" value="{{ old_hostname }}">
+            <input type="hidden" name="new_hostname" value="{{ new_hostname }}">
+            <input type="hidden" name="target_model" value="{{ target_model }}">
+            <button type="submit" class="btn-xlsx">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+              Download port map .xlsx
+            </button>
+          </form>
+          {% endif %}
+          <!-- Copy -->
+          <button class="btn-ghost" onclick="copyConfig()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            Copy
+          </button>
+        </div>
+      </div>
+
+      {% if warnings %}
+      <div class="warnings-box">
+        <div class="warnings-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          Review notes
+        </div>
+        <ul>
+          {% for w in warnings %}<li>{{ w }}</li>{% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <pre id="outputConfig" class="output-code">{{ result }}</pre>
+    </div>
+    {% endif %}
+  </main>
+
+  <footer class="footer">
+    <p>VG Config Converter &mdash; Use as a migration starting point. Always validate in a lab before production deployment.</p>
+  </footer>
+
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Cisco UC License Calculator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+:root{
+  --bg:#F0F7FF;--white:#FFFFFF;--surf:#FFFFFF;--surf2:#F0F7FF;--surf3:#E3EEF9;
+  --br:#C8DDEF;--br2:#A8C8E0;
+  --blue:#00BCEB;--blue2:#0095C8;--dark:#003A5D;--mid:#005073;
+  --lb:#E6F7FD;--lb2:#CCF0FB;
+  --green:#16803C;--gdim:#D1FAE5;--gbr:#6EE7B7;
+  --amber:#B45309;--adim:#FEF3C7;--abr:#FCD34D;
+  --red:#C53030;--rdim:#FEE2E2;--rbr:#FCA5A5;
+  --purple:#5B21B6;--pdim:#EDE9FE;--pbr:#C4B5FD;
+  --teal:#0F766E;--tdim:#CCFBF1;--tbr:#5EEAD4;
+  --text:#1A202C;--text2:#2D3748;--text3:#4A5568;--text4:#718096;
+  --r:8px;--rl:12px;--rxl:16px;
+  --shadow:0 1px 4px rgba(0,60,100,.08);--shadow-md:0 4px 16px rgba(0,60,100,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
+h1,h2,h3,h4,h5{font-family:'Syne',sans-serif;line-height:1.25;}
+a{color:var(--blue2);text-decoration:none;}a:hover{color:var(--dark);}
+::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-track{background:var(--surf3);}::-webkit-scrollbar-thumb{background:var(--br2);border-radius:99px;}
+.topbar{background:var(--dark);color:#fff;padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:var(--shadow-md);}
+.tb-l{display:flex;align-items:center;gap:12px;}
+.tb-badge{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:9px;font-weight:500;color:#001A2E;letter-spacing:.4px;flex-shrink:0;}
+.tb-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#fff;}
+.tb-sub{font-size:10px;color:#94C4D9;margin-top:1px;}
+.tb-nav{display:flex;gap:3px;flex-wrap:wrap;}
+.tb-nav a{color:#B0D4E4;font-size:11px;padding:5px 10px;border-radius:6px;transition:all .15s;white-space:nowrap;}
+.tb-nav a:hover{background:rgba(255,255,255,.15);color:#fff;}
+.tb-nav a.act{background:var(--blue);color:#001A2E;font-weight:600;}
+.layout{display:grid;grid-template-columns:256px 1fr;min-height:calc(100vh - 56px);}
+.sidebar{background:var(--surf);border-right:1px solid var(--br);padding:18px 14px;overflow-y:auto;max-height:calc(100vh - 56px);position:sticky;top:56px;}
+.main-area{padding:26px 30px;overflow-y:auto;}
+.nav-section{margin-bottom:20px;}
+.nav-lbl{font-size:9px;font-weight:700;color:var(--text4);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;padding:0 8px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--r);cursor:pointer;color:var(--text3);font-size:12px;transition:all .12s;margin-bottom:2px;user-select:none;}
+.nav-item:hover{background:var(--lb);color:var(--dark);}
+.nav-item.act{background:var(--lb);color:var(--dark);border:1.5px solid var(--blue);font-weight:600;}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:var(--br2);flex-shrink:0;}
+.nav-item.act .nav-dot{background:var(--blue);}
+.nav-cnt{margin-left:auto;background:var(--surf3);color:var(--text4);font-size:10px;font-family:'DM Mono',monospace;padding:1px 7px;border-radius:99px;}
+.nav-item.act .nav-cnt{background:var(--lb2);color:var(--dark);}
+.card{background:var(--surf);border:1px solid var(--br);border-radius:var(--rl);padding:20px;box-shadow:var(--shadow);}
+.card+.card{margin-top:12px;}
+.card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--dark);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.cdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.full{grid-column:1/-1;}
+.field{margin-bottom:12px;}
+.field:last-child{margin-bottom:0;}
+label{display:block;font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+input[type=number],input[type=text],input[type=email],select,textarea{width:100%;background:var(--surf);border:1.5px solid var(--br);border-radius:var(--r);padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);}
+textarea{resize:vertical;font-size:12px;line-height:1.5;}
+.help{font-size:10px;color:var(--text4);margin-top:3px;line-height:1.4;}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--r);border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;transition:all .15s;white-space:nowrap;}
+.btn-primary{background:var(--dark);color:#fff;}
+.btn-primary:hover{background:var(--mid);}
+.btn-blue{background:var(--blue);color:var(--dark);}
+.btn-blue:hover{background:var(--blue2);color:#fff;}
+.btn-ghost{background:transparent;color:var(--text3);border:1.5px solid var(--br);}
+.btn-ghost:hover{background:var(--lb);color:var(--dark);border-color:var(--blue);}
+.btn-sm{padding:5px 12px;font-size:11px;}
+.ibox{background:var(--lb);border-left:3px solid var(--blue);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.5;}
+.wbox{background:var(--adim);border-left:3px solid var(--amber);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--amber);line-height:1.5;}
+.gbox{background:var(--gdim);border-left:3px solid var(--green);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--green);line-height:1.5;}
+.rbox{background:var(--rdim);border-left:3px solid var(--red);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--red);line-height:1.5;}
+.sec-hdr{margin-bottom:20px;}
+.sec-tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:99px;margin-bottom:7px;}
+.t-blue{background:var(--lb);color:var(--dark);}
+.t-green{background:var(--gdim);color:var(--green);}
+.t-amber{background:var(--adim);color:var(--amber);}
+.t-red{background:var(--rdim);color:var(--red);}
+.t-purple{background:var(--pdim);color:var(--purple);}
+.t-teal{background:var(--tdim);color:var(--teal);}
+.sec-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--dark);margin-bottom:4px;}
+.sec-desc{color:var(--text3);font-size:12px;line-height:1.6;max-width:720px;}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0;}
+.metric{background:var(--surf2);border:1px solid var(--br);border-radius:var(--r);padding:14px;}
+.metric.hl{background:var(--dark);border-color:var(--dark);}
+.m-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text4);margin-bottom:5px;}
+.metric.hl .m-label{color:#94C4D9;}
+.m-val{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--dark);}
+.metric.hl .m-val{color:var(--blue);}
+.m-sub{font-size:10px;color:var(--text4);margin-top:2px;}
+.metric.hl .m-sub{color:#94C4D9;}
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{background:var(--dark);color:#fff;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:9px 12px;text-align:left;}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--br);font-size:12px;color:var(--text3);}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--surf2);}
+.tbl .mono{font-family:'DM Mono',monospace;color:var(--dark);font-weight:500;}
+.tbl .hi{color:var(--blue2);font-family:'DM Mono',monospace;font-weight:600;}
+.tbl .ok{color:var(--green);font-family:'DM Mono',monospace;}
+.badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:.3px;}
+.b-req{background:var(--rdim);color:var(--red);}
+.b-inc{background:var(--gdim);color:var(--green);}
+.b-opt{background:var(--adim);color:var(--amber);}
+.b-na{background:var(--surf3);color:var(--text4);}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--br);}
+.toggle-row:last-child{border-bottom:none;}
+.tgl-lbl{font-size:12px;color:var(--text2);}
+.tgl-sub{font-size:10px;color:var(--text4);margin-top:1px;}
+.switch{position:relative;width:36px;height:20px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;background:var(--br);border-radius:99px;transition:.2s;cursor:pointer;}
+.slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.switch input:checked+.slider{background:var(--blue);}
+.switch input:checked+.slider::before{transform:translateX(16px);}
+.price-row{display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:end;}
+.pfx{position:relative;}
+.pfx input{padding-left:24px;}
+.pfx::before{content:'$';position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text4);font-size:12px;z-index:1;}
+hr.div{border:none;border-top:1px solid var(--br);margin:16px 0;}
+.sub-sec{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text3);margin:18px 0 10px;padding-bottom:5px;border-bottom:2px solid var(--blue);text-transform:uppercase;letter-spacing:.6px;}
+.code-out{background:#001524;border:1px solid var(--br);border-radius:var(--r);padding:16px;font-family:'DM Mono',monospace;font-size:12px;color:#A5F3FC;line-height:1.7;white-space:pre;overflow-x:auto;max-height:550px;overflow-y:auto;}
+.sb-total{background:var(--dark);border-radius:var(--rl);padding:16px;margin-top:18px;}
+.sb-total-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#94C4D9;margin-bottom:7px;}
+.sb-total-val{font-family:'DM Mono',monospace;font-size:24px;font-weight:500;color:var(--blue);}
+.sb-total-sub{font-size:10px;color:#94C4D9;margin-top:3px;}
+.totals-blk{background:var(--dark);border-radius:var(--rl);padding:20px;margin-top:18px;}
+.tot-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.1);}
+.tot-row:last-child{border-bottom:none;padding-top:12px;margin-top:4px;}
+.tot-lbl{font-size:12px;color:#94C4D9;}
+.tot-val{font-family:'DM Mono',monospace;font-size:13px;color:var(--blue);}
+.tot-row.grand .tot-lbl{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#fff;}
+.tot-row.grand .tot-val{font-size:20px;color:#4ADE80;}
+.section{display:none;}
+.section.act{display:block;}
+.footer{background:var(--dark);color:#fff;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;font-size:11px;}
+.footer-brand{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--blue);}
+/* Opt cards */
+.opt-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
+.opt-card{background:var(--surf);border:2px solid var(--br);border-radius:var(--rl);padding:14px 10px;cursor:pointer;transition:all .15s;text-align:center;user-select:none;}
+.opt-card:hover{border-color:var(--blue);background:var(--lb);}
+.opt-card.sel{border-color:var(--blue);background:var(--lb);box-shadow:0 0 0 3px var(--lb2);}
+.opt-card-i{font-size:22px;margin-bottom:5px;}
+.opt-card-t{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text2);}
+.opt-card.sel .opt-card-t{color:var(--dark);}
+.opt-card-s{font-size:9px;color:var(--text4);margin-top:2px;line-height:1.3;}
+/* HLD output styles */
+.hld-doc{background:#fff;border:1px solid var(--br);border-radius:var(--rl);padding:40px;max-width:900px;margin:0 auto;font-size:13px;line-height:1.7;color:#1A202C;}
+.hld-cover{text-align:center;padding:40px 0 60px;border-bottom:3px solid var(--blue);margin-bottom:40px;}
+.hld-logo{width:60px;height:60px;background:var(--dark);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-family:'DM Mono',monospace;font-size:11px;color:var(--blue);}
+.hld-doc-title{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;color:var(--dark);margin-bottom:8px;}
+.hld-doc-subtitle{font-size:16px;color:var(--text3);margin-bottom:24px;}
+.hld-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left;max-width:500px;margin:24px auto 0;}
+.hld-meta-row{display:flex;gap:8px;font-size:12px;}
+.hld-meta-key{font-weight:700;color:var(--text4);min-width:100px;}
+.hld-meta-val{color:var(--text2);}
+.hld-toc{margin:0 0 40px;}
+.hld-toc-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--dark);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--blue);}
+.hld-toc-item{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:var(--text3);border-bottom:1px dotted var(--br);}
+.hld-toc-item span:first-child{font-weight:600;color:var(--text2);}
+.hld-section{margin-bottom:36px;}
+.hld-h1{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#fff;background:var(--dark);padding:10px 16px;border-radius:var(--r) var(--r) 0 0;margin-bottom:0;}
+.hld-h1-body{border:1px solid var(--br);border-top:none;border-radius:0 0 var(--r) var(--r);padding:16px;}
+.hld-h2{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--dark);border-left:4px solid var(--blue);padding-left:10px;margin:20px 0 10px;}
+.hld-h3{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--mid);margin:14px 0 8px;}
+.hld-p{margin-bottom:10px;line-height:1.75;}
+.hld-table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:12px;}
+.hld-table th{background:var(--dark);color:#fff;padding:8px 12px;text-align:left;font-size:11px;letter-spacing:.3px;}
+.hld-table td{padding:7px 12px;border-bottom:1px solid var(--br);color:var(--text2);}
+.hld-table tr:nth-child(even) td{background:var(--surf2);}
+.hld-callout{background:var(--lb);border:1px solid var(--blue)44;border-left:4px solid var(--blue);border-radius:0 var(--r) var(--r) 0;padding:12px 16px;margin:12px 0;font-size:12px;}
+.hld-warn{background:var(--adim);border-left:4px solid var(--amber);border-radius:0 var(--r) var(--r) 0;padding:12px 16px;margin:12px 0;font-size:12px;color:var(--amber);}
+.hld-badge-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;}
+.hld-badge{background:var(--lb);border:1px solid var(--blue)44;border-radius:99px;padding:3px 10px;font-size:10px;font-weight:700;color:var(--dark);}
+@media print{
+  .topbar,.sidebar,#print-btn,#gen-btn,.btn-ghost,.btn-primary:not(#gen-btn){display:none!important;}
+  .layout{display:block;}
+  .main-area{padding:0;}
+  .section{display:block!important;}
+  .hld-doc{border:none;padding:20px;}
+  @page{margin:15mm;size:A4;}
+}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="tb-l"><div class="tb-badge">LIC</div><div><div class="tb-title">Cisco UC License Calculator</div><div class="tb-sub">CUCM v14/v15 · Webex MT+DI · SME · Workspace · Route List Calls</div></div></div><div class="tb-nav"><a href="index.html">⌂ Home</a><a href="hld_generator.html">HLD Generator</a><a href="license_calc.html" class=act>License Calc</a><a href="bandwidth.html">Network Planner</a><a href="vg_config.html">VG Config Gen</a><a href="sizing_tool.html">Sizing Tool</a></div></div>
+
+<div class="layout">
+<aside class="sidebar">
+  <div class="nav-section">
+    <div class="nav-lbl">Sections</div>
+    <div class="nav-item act" onclick="sec('project',this)"><span class="nav-dot"></span>Project Details</div>
+    <div class="nav-item" onclick="sec('cucm',this)"><span class="nav-dot"></span>CUCM v14/v15 Licensing<span class="nav-cnt" id="cnt-cucm"></span></div>
+    <div class="nav-item" onclick="sec('sme',this)"><span class="nav-dot"></span>SME &amp; Unity Connection<span class="nav-cnt" id="cnt-sme"></span></div>
+    <div class="nav-item" onclick="sec('wxmt',this)"><span class="nav-dot"></span>Webex Calling MT<span class="nav-cnt" id="cnt-mt"></span></div>
+    <div class="nav-item" onclick="sec('wxdi',this)"><span class="nav-dot"></span>Webex Calling DI<span class="nav-cnt" id="cnt-di"></span></div>
+    <div class="nav-item" onclick="sec('addons',this)"><span class="nav-dot"></span>Add-ons &amp; Options<span class="nav-cnt" id="cnt-ao"></span></div>
+    <div class="nav-item" onclick="sec('routelist',this)"><span class="nav-dot"></span>PSTN Route List Calls<span class="nav-cnt" id="cnt-rl"></span></div>
+    <div class="nav-item" onclick="sec('summary',this)"><span class="nav-dot"></span>Summary &amp; Export</div>
+  </div>
+  <div class="sb-total">
+    <div class="sb-total-label">Monthly Total</div>
+    <div class="sb-total-val" id="sb-total">$0</div>
+    <div class="sb-total-sub">Annual: <span id="sb-annual" style="color:#4ADE80;">$0</span></div>
+    <hr style="border:none;border-top:1px solid rgba(255,255,255,.1);margin:10px 0;">
+    <div style="font-size:10px;color:#94C4D9;">Total Licenses: <span id="sb-lics" style="color:var(--blue);font-family:'DM Mono',monospace;">0</span></div>
+  </div>
+  <div style="margin-top:10px;display:flex;gap:6px;flex-direction:column;">
+    <button class="btn btn-ghost btn-sm" onclick="resetAll()">↺ Reset</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportPDF()">⬇ Export PDF</button>
+  </div>
+</aside>
+<div class="main-area">
+
+<!-- PROJECT -->
+<div id="sec-project" class="section act">
+  <div class="sec-hdr"><span class="sec-tag t-blue">Setup</span><h2 class="sec-title">Project Details</h2></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--blue)"></span>Customer</div>
+      <div class="field"><label>Customer Name</label><input type="text" id="p-cust" placeholder="e.g. Acme Corporation Ltd" oninput="calc()"/></div>
+      <div class="field"><label>Project Name</label><input type="text" id="p-proj" placeholder="e.g. Webex Calling Migration 2025" oninput="calc()"/></div>
+      <div class="field"><label>Prepared By</label><input type="text" id="p-arch" placeholder="e.g. John Smith, CCIE #12345" oninput="calc()"/></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--amber)"></span>Context</div>
+      <div class="field"><label>Deployment Model</label><select id="p-model" onchange="calc()"><option>Webex Calling MT Only</option><option>Webex Calling DI</option><option>MT + On-Prem CUCM (Hybrid)</option><option>DI + On-Prem CUCM</option><option>CUCM On-Premises Only</option></select></div>
+      <div class="field"><label>Currency Symbol</label><select id="p-curr" onchange="calc()"><option value="$">USD $</option><option value="£">GBP £</option><option value="€">EUR €</option><option value="A$">AUD A$</option></select></div>
+    </div>
+  </div>
+  <div class="wbox">⚠ All prices are indicative reference list prices for budgetary estimation only. Get a formal CCW quote before presenting to a customer. Route List Calls pricing is channel-confidential.</div>
+</div>
+
+<!-- CUCM LICENSING -->
+<div id="sec-cucm" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-amber">On-Premises</span><h2 class="sec-title">CUCM v14 / v15 — Smart Licensing</h2>
+  <p class="sec-desc">CUCM v14+ uses Cisco Smart Software Licensing only (no PLM/ELM). User-based UCL via CSSM with tier substitution hierarchy. <strong>CSSM hierarchy: CUWL Professional ⊇ CUWL Standard ⊇ Enhanced Plus ⊇ Enhanced ⊇ Basic ⊇ Essential.</strong></p></div>
+  <div class="ibox"><strong>Device → License rules:</strong> 1 device = Enhanced minimum · 2 devices = Enhanced Plus minimum · 3–10 devices = CUWL minimum · Room device = TelePresence Room · No OwnerUserID = Device Only license</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--amber)"></span>UCL — User Connect Licensing (Smart License)</div>
+      <div class="field"><label>UCL Essential — 1 basic/analog device (6901, ATA, analog phone)</label>
+        <div class="price-row"><input type="number" id="c-ess" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="cp-ess" value="12" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">Cisco 3905, 6901, ATA 191/192/187. Jabber IM/Presence. No SNR, no video.</div></div>
+      <div class="field"><label>UCL Basic — 1 voice device, SNR / Mobile Connect</label>
+        <div class="price-row"><input type="number" id="c-bas" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="cp-bas" value="18" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">Cisco 6921. SNR/Mobile Connect. Jabber. No video.</div></div>
+      <div class="field"><label>UCL Enhanced — 1 voice+video device (most common for standard user)</label>
+        <div class="price-row"><input type="number" id="c-enh" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="cp-enh" value="25" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">79xx, 89xx, 99xx, 6941/6961, DX80, TelePresence EX60/EX90. Jabber Desktop+Mobile. SNR. 1 device max.</div></div>
+      <div class="field"><label>UCL Enhanced Plus — up to 2 devices per user</label>
+        <div class="price-row"><input type="number" id="c-enhp" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="cp-enhp" value="32" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">All Enhanced features + 2nd device (e.g. desk phone + Jabber softclient). Minimum for dual-device users.</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--purple)"></span>CUWL — Cisco Unified Workspace Licensing</div>
+      <div class="field"><label>CUWL Standard — up to 10 devices, full UC features</label>
+        <div class="price-row"><input type="number" id="c-cstd" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="cp-cstd" value="38" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">3+ devices per user. Jabber Desktop+Mobile. SNR. IM&amp;P. Advanced UC features. Does NOT include Webex Meetings or Unity Connection.</div></div>
+      <div class="field"><label>CUWL Professional — up to 10 devices, full UC+Meetings suite</label>
+        <div class="price-row"><input type="number" id="c-cpro" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="cp-cpro" value="52" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">All CUWL Standard + Webex Meetings + Unity Connection VM. Max UC suite. 10 devices per user.</div></div>
+      <div class="field"><label>TelePresence Room — room-based immersive endpoint</label>
+        <div class="price-row"><input type="number" id="c-tp" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="cp-tp" value="85" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">Cisco TelePresence 3200/3000/1300, MX Series, TX Series, SX Series. Room-based (not user-based). Also covers Webex Board/Room/Desk registered to CUCM.</div></div>
+      <div class="field"><label>Device Only (no OwnerUserID — common area / lobby)</label>
+        <div class="price-row"><input type="number" id="c-dev" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="cp-dev" value="12" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">Devices with blank OwnerUserID field. License determined by device type (usually Essential or Basic).</div></div>
+    </div>
+  </div>
+  <div class="mgrid">
+    <div class="metric"><div class="m-label">CUCM Users</div><div class="m-val" id="r-cucm-u">0</div></div>
+    <div class="metric"><div class="m-label">UCL Licenses</div><div class="m-val" id="r-cucm-ucl">0</div></div>
+    <div class="metric"><div class="m-label">CUWL Licenses</div><div class="m-val" id="r-cucm-cuwl">0</div></div>
+    <div class="metric hl"><div class="m-label">CUCM Monthly Est.</div><div class="m-val" id="r-cucm-mo">$0</div></div>
+  </div>
+</div>
+
+<!-- SME + CUC -->
+<div id="sec-sme" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-purple">On-Premises</span><h2 class="sec-title">SME &amp; Unity Connection</h2></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--purple)"></span>Session Management Edition (SME)</div>
+      <div class="ibox">SME centralises the dial plan across multiple CUCM leaf clusters. One SIP trunk from SME to LGW replaces N per-cluster trunks — significantly reducing CUBE session license cost.</div>
+      <div class="field"><label>SME Required?</label><select id="sme-req" onchange="calc()"><option value="no">No — single CUCM cluster</option><option value="yes">Yes — 2+ clusters need centralised dial plan</option></select></div>
+      <div class="field"><label>Number of Leaf CUCM Clusters</label><input type="number" id="sme-cl" value="0" min="0" oninput="calc()"/></div>
+      <div class="field"><label>SME Monthly License Cost</label><div class="pfx"><input type="number" id="sme-cost" value="0" min="0" step="0.01" oninput="calc()"/></div><div class="help">Infrastructure license — CCW-quoted. Enter monthly equivalent. SME requires Smart Licensing.</div></div>
+      <div id="sme-saving-box" class="gbox" style="display:none;">SME saves <strong id="sme-saves">0</strong> CUBE session licenses vs per-cluster trunking (one LGW trunk instead of N).</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--amber)"></span>Unity Connection (CUC) Voicemail</div>
+      <div class="ibox">CUC voicemail is <strong>INCLUDED</strong> in CUWL Professional licenses. Only add separate CUC licenses for UCL users who need voicemail.</div>
+      <div class="field"><label>CUC Standard VM (for UCL users)</label><div class="price-row"><input type="number" id="cuc-std" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="cucp-std" value="8" min="0" step="0.01" oninput="calc()"/></div></div><div class="help">Basic voicemail + VM-to-email. For UCL Essential/Basic/Enhanced users only.</div></div>
+      <div class="field"><label>CUC Unified Messaging (Exchange/O365 integration)</label><div class="price-row"><input type="number" id="cuc-um" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="cucp-um" value="12" min="0" step="0.01" oninput="calc()"/></div></div><div class="help">Adds Exchange/O365 calendar, Outlook voice access, visual voicemail to standard VM.</div></div>
+      <div class="field"><label>CUC Shared VM Box (department / hunt group box)</label><div class="price-row"><input type="number" id="cuc-ext" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="cucp-ext" value="5" min="0" step="0.01" oninput="calc()"/></div></div><div class="help">Non-personal shared voicemail boxes (AA, HG, dept). No user login capability.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- WEBEX MT -->
+<div id="sec-wxmt" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-blue">Webex Cloud</span><h2 class="sec-title">Webex Calling MT — Licensing</h2>
+  <p class="sec-desc">Named user model under Webex Calling Flex Plan. <strong>License hierarchy: Customer Assist ⊇ Professional ⊇ Standard.</strong> Workspace license is device-based (not user-based).</p></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--blue)"></span>User Licenses</div>
+      <div class="field"><label>Standard (~$17/user/mo) — telephony-only users</label>
+        <div class="price-row"><input type="number" id="mt-std" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="mtp-std" value="17" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">1 device OR softclient (not both simultaneously). VM, AA, Hunt Group, Call Park, Call Pickup, E.911. No AI Assistant.</div></div>
+      <div class="field"><label>Professional (~$25/user/mo) — power users</label>
+        <div class="price-row"><input type="number" id="mt-pro" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="mtp-pro" value="25" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">Phone + softclient simultaneously. BLF, Shared Lines, Exec/EA pairing, AI Assistant, CTI/JTAPI, SNR, up to 35 devices.</div></div>
+      <div class="field"><label>Customer Assist (~$35/agent/mo) — contact centre agents</label>
+        <div class="price-row"><input type="number" id="mt-ca" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="mtp-ca" value="35" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">All Professional features + queue supervisor, agent screen pop, AI call summaries, barge/whisper/silent monitoring, queue-level call recording (GA 2025).</div></div>
+      <div class="field"><label>Webex Suite (~$35/user/mo) — full UC users</label>
+        <div class="price-row"><input type="number" id="mt-suite" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="mtp-suite" value="35" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">Professional Calling + Webex Meetings + Messaging + Webinars. Best value for full UC users.</div></div>
+      <div class="field"><label>Webex Suite Enterprise (~$43/user/mo)</label>
+        <div class="price-row"><input type="number" id="mt-suiteent" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="mtp-suiteent" value="43" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">Suite + Premium AI Assistant + Advanced Recording + Extended Webinars + Legal Hold.</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--teal)"></span>Workspace License (device-based, not user-based)</div>
+      <div class="ibox">Workspace licenses cover devices NOT associated to a named user. Each device gets its own license regardless of who uses it.</div>
+      <div class="field"><label>Common Area Phone (~$15/device/mo)</label>
+        <div class="price-row"><input type="number" id="mt-ws-common" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="mtp-ws-common" value="15" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">Lobby phones, reception, hallway phones, shared workstation phones.</div></div>
+      <div class="field"><label>Meeting Room Device (~$15/device/mo)</label>
+        <div class="price-row"><input type="number" id="mt-ws-room" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="mtp-ws-room" value="15" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">Shared calling device in conference/meeting rooms.</div></div>
+      <div class="field"><label>Hot Desk Device (~$15/device/mo)</label>
+        <div class="price-row"><input type="number" id="mt-ws-hd" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="mtp-ws-hd" value="15" min="0" step="0.01" oninput="calc()"/></div></div></div>
+      <div class="field"><label>ATA / VG FXS Ports (~$15/port/mo)</label>
+        <div class="price-row"><input type="number" id="mt-ws-ata" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="mtp-ws-ata" value="15" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">Each FXS port on ATA 191/192 or VG204/VG224/VG350/VG450 needs 1 Workspace license.</div></div>
+      <div class="field"><label>DECT Handset (~$15/handset/mo)</label>
+        <div class="price-row"><input type="number" id="mt-ws-dect" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="mtp-ws-dect" value="15" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">Cisco 6823/6825 DECT handsets. DECT base stations do NOT need a license.</div></div>
+      <div class="field"><label>Webex Room/Video Device (~$40/device/mo)</label>
+        <div class="price-row"><input type="number" id="mt-ws-video" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="mtp-ws-video" value="40" min="0" step="0.01" oninput="calc()"/></div></div>
+        <div class="help">Cisco Desk Pro, Board, Room Kit. Includes Meetings + Calling. Not a standard Workspace license.</div></div>
+    </div>
+  </div>
+  <div class="mgrid">
+    <div class="metric"><div class="m-label">Total MT Users</div><div class="m-val" id="r-mt-u">0</div></div>
+    <div class="metric"><div class="m-label">Customer Assist</div><div class="m-val" id="r-mt-ca">0</div></div>
+    <div class="metric"><div class="m-label">Workspace Devices</div><div class="m-val" id="r-mt-ws">0</div></div>
+    <div class="metric hl"><div class="m-label">MT Monthly Est.</div><div class="m-val" id="r-mt-mo">$0</div></div>
+  </div>
+</div>
+
+<!-- WEBEX DI -->
+<div id="sec-wxdi" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-purple">Webex Cloud</span><h2 class="sec-title">Webex Calling DI — Licensing</h2><p class="sec-desc">Dedicated Instance (Cisco-hosted CUCM). Route List Calls INCLUDED in DI. License types mirror CUCM UCL/CUWL naming.</p></div>
+  <div class="gbox">✓ Route List Calls license is INCLUDED in all DI subscriptions — no separate Route List license needed for DI users.</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--purple)"></span>DI User Licenses</div>
+      <div class="field"><label>DI Essential (~$18/user/mo)</label><div class="price-row"><input type="number" id="di-ess" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="dip-ess" value="18" min="0" step="0.01" oninput="calc()"/></div></div></div>
+      <div class="field"><label>DI Enhanced (~$28/user/mo)</label><div class="price-row"><input type="number" id="di-enh" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="dip-enh" value="28" min="0" step="0.01" oninput="calc()"/></div></div></div>
+      <div class="field"><label>DI CUWL Standard (~$40/user/mo)</label><div class="price-row"><input type="number" id="di-cstd" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="dip-cstd" value="40" min="0" step="0.01" oninput="calc()"/></div></div></div>
+      <div class="field"><label>DI CUWL Professional (~$55/user/mo)</label><div class="price-row"><input type="number" id="di-cpro" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="dip-cpro" value="55" min="0" step="0.01" oninput="calc()"/></div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--purple)"></span>DI Infrastructure</div>
+      <div class="field"><label>DI Clusters Required</label><input type="number" id="di-cl" value="1" min="1" oninput="calc()"/><div class="help">Each DI cluster ≤ 40,000 users. Multiple for geo-redundancy.</div></div>
+      <div class="field"><label>Expressway C+E Pairs (for MRA)</label><input type="number" id="di-expwy" value="1" min="0" oninput="calc()"/><div class="help">Included in DI. Required for remote Jabber/Webex App users via MRA.</div></div>
+    </div>
+  </div>
+  <div class="mgrid">
+    <div class="metric"><div class="m-label">DI Users</div><div class="m-val" id="r-di-u">0</div></div>
+    <div class="metric"><div class="m-label">DI Clusters</div><div class="m-val" id="r-di-cl">0</div></div>
+    <div class="metric hl"><div class="m-label">DI Monthly Est.</div><div class="m-val" id="r-di-mo">$0</div></div>
+  </div>
+</div>
+
+<!-- ADD-ONS -->
+<div id="sec-addons" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-green">Add-ons</span><h2 class="sec-title">Add-ons &amp; Optional Services</h2></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--green)"></span>Per User / Month</div>
+      <div class="field"><label>Webex Go / eSIM (~$15/user/mo)</label><div class="price-row"><input type="number" id="ao-go" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="aop-go" value="15" min="0" step="0.01" oninput="calc()"/></div></div></div>
+      <div class="field"><label>Attendant Console (~$20/user/mo)</label><div class="price-row"><input type="number" id="ao-ac" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="aop-ac" value="20" min="0" step="0.01" oninput="calc()"/></div></div></div>
+      <div class="field"><label>Premium AI Assistant (~$10/user/mo)</label><div class="price-row"><input type="number" id="ao-ai" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="aop-ai" value="10" min="0" step="0.01" oninput="calc()"/></div></div></div>
+      <div class="field"><label>Business Texting / SMS (~$5/user/mo)</label><div class="price-row"><input type="number" id="ao-sms" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="aop-sms" value="5" min="0" step="0.01" oninput="calc()"/></div></div></div>
+      <div class="field"><label>Call Recording — Dubber (~$8/user/mo)</label><div class="price-row"><input type="number" id="ao-rec" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="aop-rec" value="8" min="0" step="0.01" oninput="calc()"/></div></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--green)"></span>Per Location / Org</div>
+      <div class="field"><label>AI Receptionist (~$100/location/mo)</label><div class="price-row"><input type="number" id="ao-airec" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="aop-airec" value="100" min="0" step="0.01" oninput="calc()"/></div></div></div>
+      <div class="field"><label>Cisco CCP DIDs (~$1/DID/mo)</label><div class="price-row"><input type="number" id="ao-did" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="aop-did" value="1" min="0" step="0.01" oninput="calc()"/></div></div></div>
+      <div class="field"><label>CCP Domestic Minutes (~$0.02/min)</label><div class="price-row"><input type="number" id="ao-mins" value="0" min="0" oninput="calc()" placeholder="avg monthly mins"/><div class="pfx"><input type="number" id="aop-mins" value="0.02" min="0" step="0.001" oninput="calc()"/></div></div></div>
+      <div class="field"><label>Webex Events / Webinars (~$50/mo)</label><div class="price-row"><input type="number" id="ao-events" value="0" min="0" oninput="calc()"/><div class="pfx"><input type="number" id="aop-events" value="50" min="0" step="0.01" oninput="calc()"/></div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ROUTE LIST -->
+<div id="sec-routelist" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-red">PSTN Trunking</span><h2 class="sec-title">PSTN Route List Calls License</h2>
+  <p class="sec-desc">Required when on-premises CUCM/PBX users access cloud CCP PSTN via a Route List. <strong>License consumed only for off-net PSTN calls — NOT for on-net enterprise calls (Webex ↔ CUCM).</strong> DI includes this license.</p></div>
+  <div class="wbox">⚠ Route List Calls pricing is channel-confidential (~$2–4/concurrent call/mo est.). SKU: A-FLEX-CALLING-RLC. Always get a CCW quote. DI subscribers: INCLUDED.</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--red)"></span>Users Needing Route List</div>
+      <div class="field"><label>On-Prem CUCM Users (needing cloud PSTN)</label><input type="number" id="rl-cucm" value="0" min="0" oninput="calc()"/></div>
+      <div class="field"><label>Financial Turrets / Vertical Apps</label><input type="number" id="rl-turrets" value="0" min="0" oninput="calc()"/></div>
+      <div class="field"><label>Nurse Call / Paging Ports</label><input type="number" id="rl-special" value="0" min="0" oninput="calc()"/></div>
+      <div class="field"><label>Peak Concurrent %</label><select id="rl-pct" onchange="calc()"><option value="0.10">10%</option><option value="0.12">12%</option><option value="0.15" selected>15% (standard)</option><option value="0.20">20%</option><option value="0.25">25%</option></select></div>
+      <div class="field"><label>Route List Cost ($/concurrent call/mo)</label><div class="pfx"><input type="number" id="rl-cost" value="3" min="0" step="0.01" oninput="calc()"/></div></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--red)"></span>Result</div>
+      <div class="mgrid">
+        <div class="metric"><div class="m-label">RL Users</div><div class="m-val" id="r-rl-u">0</div></div>
+        <div class="metric"><div class="m-label">Concurrent Calls</div><div class="m-val" id="r-rl-c">0</div></div>
+        <div class="metric"><div class="m-label">Licenses to Buy</div><div class="m-val" id="r-rl-l">0</div><div class="m-sub">+20% burst: <span id="r-rl-b">0</span></div></div>
+        <div class="metric hl"><div class="m-label">RL Monthly</div><div class="m-val" id="r-rl-mo">$0</div></div>
+      </div>
+      <table class="tbl" style="margin-top:14px;">
+        <thead><tr><th>Call Type</th><th>License?</th></tr></thead>
+        <tbody>
+          <tr><td>CUCM user → PSTN via Route List</td><td><span class="badge b-req">YES</span></td></tr>
+          <tr><td>PSTN inbound to CUCM user DID</td><td><span class="badge b-req">YES</span></td></tr>
+          <tr><td>Webex MT user ↔ CUCM user (on-net)</td><td><span class="badge b-inc">NO</span></td></tr>
+          <tr><td>CUCM → SME → LGW → PSTN</td><td><span class="badge b-req">YES</span></td></tr>
+          <tr><td>DI user → any PSTN call</td><td><span class="badge b-inc">INCLUDED IN DI</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- SUMMARY -->
+<div id="sec-summary" class="section">
+  <div class="sec-hdr"><span class="sec-tag t-blue">Summary</span><h2 class="sec-title">Cost Summary &amp; Export</h2></div>
+  <div class="wbox">⚠ Indicative budget estimates only. Always obtain a formal CCW quote.</div>
+  <div class="totals-blk">
+    <div class="tot-row"><span class="tot-lbl">CUCM On-Premises (UCL/CUWL)</span><span class="tot-val" id="t-cucm">$0</span></div>
+    <div class="tot-row"><span class="tot-lbl">SME + Unity Connection</span><span class="tot-val" id="t-sme">$0</span></div>
+    <div class="tot-row"><span class="tot-lbl">Webex Calling MT (users)</span><span class="tot-val" id="t-mt-u">$0</span></div>
+    <div class="tot-row"><span class="tot-lbl">Webex Calling MT (workspaces)</span><span class="tot-val" id="t-mt-ws">$0</span></div>
+    <div class="tot-row"><span class="tot-lbl">Webex Calling DI</span><span class="tot-val" id="t-di">$0</span></div>
+    <div class="tot-row"><span class="tot-lbl">Add-ons &amp; Optional</span><span class="tot-val" id="t-ao">$0</span></div>
+    <div class="tot-row"><span class="tot-lbl">PSTN Route List Calls</span><span class="tot-val" id="t-rl">$0</span></div>
+    <hr style="border:none;border-top:1px solid rgba(255,255,255,.1);margin:8px 0;">
+    <div class="tot-row"><span class="tot-lbl" style="color:#fff;font-size:14px;">Total Monthly</span><span class="tot-val" style="font-size:18px;color:#4ADE80;" id="t-total">$0</span></div>
+    <div class="tot-row"><span class="tot-lbl" style="color:#fff;font-size:14px;">Total Annual</span><span class="tot-val" style="font-size:18px;color:#4ADE80;" id="t-annual">$0</span></div>
+    <div class="tot-row grand"><span class="tot-lbl">Total Licenses</span><span class="tot-val" id="t-lics">0</span></div>
+  </div>
+  <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px;">
+    <button class="btn btn-ghost" onclick="resetAll()">↺ Reset</button>
+    <button class="btn btn-primary" onclick="exportPDF()">⬇ Export PDF</button>
+  </div>
+</div>
+
+</div></div>
+<footer class="footer"><div><span class="footer-brand">Cisco UC &amp; Webex Suite</span><span style="color:#94C4D9;margin:0 8px;">·</span><span style="color:#94C4D9;">Professional Tools Suite</span></div><div style="color:#94C4D9;">Designed &amp; developed by <strong style="color:var(--blue);">Sumit Rustagi</strong></div></footer>
+<script>
+function n(id){return parseFloat(document.getElementById(id)?.value)||0;}
+function sv(id){return document.getElementById(id)?.value||'';}
+function set(id,v){var e=document.getElementById(id);if(e)e.textContent=v;}
+function cnt(id,v){var e=document.getElementById(id);if(e){e.textContent=v>0?v:'';}}
+function fmt(x){return(sv('p-curr')||'$')+Math.round(x).toLocaleString();}
+function sec(id,el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('act'));
+  document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('act'));
+  var s=document.getElementById('sec-'+id);if(s)s.classList.add('act');
+  if(el)el.classList.add('act');
+  calc();
+}
+function calc(){
+  // CUCM
+  var ced=n('c-ess')*n('cp-ess'),cbd=n('c-bas')*n('cp-bas'),cen=n('c-enh')*n('cp-enh'),cep=n('c-enhp')*n('cp-enhp');
+  var ccs=n('c-cstd')*n('cp-cstd'),ccp=n('c-cpro')*n('cp-cpro'),ctp=n('c-tp')*n('cp-tp'),cdev=n('c-dev')*n('cp-dev');
+  var cucmTotal=ced+cbd+cen+cep+ccs+ccp+ctp+cdev;
+  var cucmUsers=n('c-ess')+n('c-bas')+n('c-enh')+n('c-enhp')+n('c-cstd')+n('c-cpro')+n('c-tp')+n('c-dev');
+  var cucmUCL=n('c-ess')+n('c-bas')+n('c-enh')+n('c-enhp');
+  var cucmCUWL=n('c-cstd')+n('c-cpro');
+  set('r-cucm-u',cucmUsers);set('r-cucm-ucl',cucmUCL);set('r-cucm-cuwl',cucmCUWL);set('r-cucm-mo',fmt(cucmTotal));
+  cnt('cnt-cucm',cucmUsers);
+  // SME
+  var smeReq=document.getElementById('sme-req').value==='yes';
+  var smeSave=smeReq?Math.max(0,(n('sme-cl')-1)*2):0;
+  document.getElementById('sme-saving-box').style.display=(smeReq&&smeSave>0)?'block':'none';
+  set('sme-saves',smeSave);
+  var smeTotal=n('sme-cost')+n('cuc-std')*n('cucp-std')+n('cuc-um')*n('cucp-um')+n('cuc-ext')*n('cucp-ext');
+  cnt('cnt-sme',smeReq?1+(n('cuc-std')+n('cuc-um')+n('cuc-ext')):n('cuc-std')+n('cuc-um')+n('cuc-ext'));
+  // MT users
+  var mtUserTotal=(n('mt-std')*n('mtp-std'))+(n('mt-pro')*n('mtp-pro'))+(n('mt-ca')*n('mtp-ca'))+(n('mt-suite')*n('mtp-suite'))+(n('mt-suiteent')*n('mtp-suiteent'));
+  var mtUsers=n('mt-std')+n('mt-pro')+n('mt-ca')+n('mt-suite')+n('mt-suiteent');
+  // MT workspaces
+  var mtWsTotal=(n('mt-ws-common')*n('mtp-ws-common'))+(n('mt-ws-room')*n('mtp-ws-room'))+(n('mt-ws-hd')*n('mtp-ws-hd'))+(n('mt-ws-ata')*n('mtp-ws-ata'))+(n('mt-ws-dect')*n('mtp-ws-dect'))+(n('mt-ws-video')*n('mtp-ws-video'));
+  var mtWsDevices=n('mt-ws-common')+n('mt-ws-room')+n('mt-ws-hd')+n('mt-ws-ata')+n('mt-ws-dect')+n('mt-ws-video');
+  set('r-mt-u',mtUsers);set('r-mt-ca',n('mt-ca'));set('r-mt-ws',mtWsDevices);set('r-mt-mo',fmt(mtUserTotal+mtWsTotal));
+  cnt('cnt-mt',mtUsers+mtWsDevices);
+  // DI
+  var diTotal=(n('di-ess')*n('dip-ess'))+(n('di-enh')*n('dip-enh'))+(n('di-cstd')*n('dip-cstd'))+(n('di-cpro')*n('dip-cpro'));
+  var diUsers=n('di-ess')+n('di-enh')+n('di-cstd')+n('di-cpro');
+  set('r-di-u',diUsers);set('r-di-cl',n('di-cl'));set('r-di-mo',fmt(diTotal));cnt('cnt-di',diUsers);
+  // Add-ons
+  var aoTotal=(n('ao-go')*n('aop-go'))+(n('ao-ac')*n('aop-ac'))+(n('ao-ai')*n('aop-ai'))+(n('ao-sms')*n('aop-sms'))+(n('ao-rec')*n('aop-rec'))+(n('ao-airec')*n('aop-airec'))+(n('ao-did')*n('aop-did'))+(n('ao-mins')*n('aop-mins'))+(n('ao-events')*n('aop-events'));
+  cnt('cnt-ao',n('ao-go')+n('ao-ac')+n('ao-ai')+n('ao-sms')+n('ao-rec')+n('ao-airec'));
+  // Route List
+  var rlU=n('rl-cucm')+n('rl-turrets')+n('rl-special');
+  var rlC=Math.ceil(rlU*parseFloat(sv('rl-pct')||0.15));
+  var rlB=Math.ceil(rlC*1.2);
+  var rlMo=rlC*n('rl-cost');
+  set('r-rl-u',rlU);set('r-rl-c',rlC);set('r-rl-l',rlC);set('r-rl-b',rlB);set('r-rl-mo',fmt(rlMo));cnt('cnt-rl',rlC);
+  // Grand
+  var grand=cucmTotal+smeTotal+mtUserTotal+mtWsTotal+diTotal+aoTotal+rlMo;
+  var totalLics=cucmUsers+mtUsers+mtWsDevices+diUsers+rlC;
+  set('t-cucm',fmt(cucmTotal));set('t-sme',fmt(smeTotal));set('t-mt-u',fmt(mtUserTotal));set('t-mt-ws',fmt(mtWsTotal));set('t-di',fmt(diTotal));set('t-ao',fmt(aoTotal));set('t-rl',fmt(rlMo));
+  set('t-total',fmt(grand));set('t-annual',fmt(grand*12));set('t-lics',totalLics);
+  set('sb-total',fmt(grand));set('sb-annual',fmt(grand*12));set('sb-lics',totalLics);
+}
+function resetAll(){
+  document.querySelectorAll('input[type=number]').forEach(i=>{
+    var d={'cp-ess':12,'cp-bas':18,'cp-enh':25,'cp-enhp':32,'cp-cstd':38,'cp-cpro':52,'cp-tp':85,'cp-dev':12,'cucp-std':8,'cucp-um':12,'cucp-ext':5,'mtp-std':17,'mtp-pro':25,'mtp-ca':35,'mtp-suite':35,'mtp-suiteent':43,'dip-ess':18,'dip-enh':28,'dip-cstd':40,'dip-cpro':55,'mtp-ws-common':15,'mtp-ws-room':15,'mtp-ws-hd':15,'mtp-ws-ata':15,'mtp-ws-dect':15,'mtp-ws-video':40,'aop-go':15,'aop-ac':20,'aop-ai':10,'aop-sms':5,'aop-rec':8,'aop-airec':100,'aop-did':1,'aop-mins':0.02,'aop-events':50,'rl-cost':3,'di-cl':1,'di-expwy':1};
+    i.value=d[i.id]!==undefined?d[i.id]:0;
+  });
+  calc();
+}
+function exportPDF(){
+  document.querySelectorAll('.section').forEach(s=>s.style.display='block');
+  window.print();
+  setTimeout(()=>document.querySelectorAll('.section').forEach(s=>{s.style.display='';}),1500);
+}
+window.onload=function(){calc();};
+</script>
+</body>
+</html>

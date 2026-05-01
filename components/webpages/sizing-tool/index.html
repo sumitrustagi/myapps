@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Cisco UC Sizing Tool</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap');
+:root{
+  --bg:#F0F7FF;--white:#FFFFFF;--surf:#FFFFFF;--surf2:#F0F7FF;--surf3:#E3EEF9;
+  --br:#C8DDEF;--br2:#A8C8E0;
+  --blue:#00BCEB;--blue2:#0095C8;--dark:#003A5D;--mid:#005073;
+  --lb:#E6F7FD;--lb2:#CCF0FB;
+  --green:#16803C;--gdim:#D1FAE5;--gbr:#6EE7B7;
+  --amber:#B45309;--adim:#FEF3C7;--abr:#FCD34D;
+  --red:#C53030;--rdim:#FEE2E2;--rbr:#FCA5A5;
+  --purple:#5B21B6;--pdim:#EDE9FE;--pbr:#C4B5FD;
+  --teal:#0F766E;--tdim:#CCFBF1;--tbr:#5EEAD4;
+  --text:#1A202C;--text2:#2D3748;--text3:#4A5568;--text4:#718096;
+  --r:8px;--rl:12px;--rxl:16px;
+  --shadow:0 1px 4px rgba(0,60,100,.08);--shadow-md:0 4px 16px rgba(0,60,100,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;line-height:1.6;min-height:100vh;}
+h1,h2,h3,h4,h5{font-family:'Syne',sans-serif;line-height:1.25;}
+a{color:var(--blue2);text-decoration:none;}a:hover{color:var(--dark);}
+::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-track{background:var(--surf3);}::-webkit-scrollbar-thumb{background:var(--br2);border-radius:99px;}
+.topbar{background:var(--dark);color:#fff;padding:0 28px;height:56px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:var(--shadow-md);}
+.tb-l{display:flex;align-items:center;gap:12px;}
+.tb-badge{width:32px;height:32px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:9px;font-weight:500;color:#001A2E;letter-spacing:.4px;flex-shrink:0;}
+.tb-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#fff;}
+.tb-sub{font-size:10px;color:#94C4D9;margin-top:1px;}
+.tb-nav{display:flex;gap:3px;flex-wrap:wrap;}
+.tb-nav a{color:#B0D4E4;font-size:11px;padding:5px 10px;border-radius:6px;transition:all .15s;white-space:nowrap;}
+.tb-nav a:hover{background:rgba(255,255,255,.15);color:#fff;}
+.tb-nav a.act{background:var(--blue);color:#001A2E;font-weight:600;}
+.layout{display:grid;grid-template-columns:256px 1fr;min-height:calc(100vh - 56px);}
+.sidebar{background:var(--surf);border-right:1px solid var(--br);padding:18px 14px;overflow-y:auto;max-height:calc(100vh - 56px);position:sticky;top:56px;}
+.main-area{padding:26px 30px;overflow-y:auto;}
+.nav-section{margin-bottom:20px;}
+.nav-lbl{font-size:9px;font-weight:700;color:var(--text4);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px;padding:0 8px;}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:var(--r);cursor:pointer;color:var(--text3);font-size:12px;transition:all .12s;margin-bottom:2px;user-select:none;}
+.nav-item:hover{background:var(--lb);color:var(--dark);}
+.nav-item.act{background:var(--lb);color:var(--dark);border:1.5px solid var(--blue);font-weight:600;}
+.nav-dot{width:7px;height:7px;border-radius:50%;background:var(--br2);flex-shrink:0;}
+.nav-item.act .nav-dot{background:var(--blue);}
+.nav-cnt{margin-left:auto;background:var(--surf3);color:var(--text4);font-size:10px;font-family:'DM Mono',monospace;padding:1px 7px;border-radius:99px;}
+.nav-item.act .nav-cnt{background:var(--lb2);color:var(--dark);}
+.card{background:var(--surf);border:1px solid var(--br);border-radius:var(--rl);padding:20px;box-shadow:var(--shadow);}
+.card+.card{margin-top:12px;}
+.card-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--dark);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.cdot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+.full{grid-column:1/-1;}
+.field{margin-bottom:12px;}
+.field:last-child{margin-bottom:0;}
+label{display:block;font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+input[type=number],input[type=text],input[type=email],select,textarea{width:100%;background:var(--surf);border:1.5px solid var(--br);border-radius:var(--r);padding:8px 11px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border .15s;}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);}
+textarea{resize:vertical;font-size:12px;line-height:1.5;}
+.help{font-size:10px;color:var(--text4);margin-top:3px;line-height:1.4;}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:var(--r);border:none;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;transition:all .15s;white-space:nowrap;}
+.btn-primary{background:var(--dark);color:#fff;}
+.btn-primary:hover{background:var(--mid);}
+.btn-blue{background:var(--blue);color:var(--dark);}
+.btn-blue:hover{background:var(--blue2);color:#fff;}
+.btn-ghost{background:transparent;color:var(--text3);border:1.5px solid var(--br);}
+.btn-ghost:hover{background:var(--lb);color:var(--dark);border-color:var(--blue);}
+.btn-sm{padding:5px 12px;font-size:11px;}
+.ibox{background:var(--lb);border-left:3px solid var(--blue);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--text2);line-height:1.5;}
+.wbox{background:var(--adim);border-left:3px solid var(--amber);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--amber);line-height:1.5;}
+.gbox{background:var(--gdim);border-left:3px solid var(--green);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--green);line-height:1.5;}
+.rbox{background:var(--rdim);border-left:3px solid var(--red);border-radius:0 var(--r) var(--r) 0;padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--red);line-height:1.5;}
+.sec-hdr{margin-bottom:20px;}
+.sec-tag{display:inline-block;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:3px 10px;border-radius:99px;margin-bottom:7px;}
+.t-blue{background:var(--lb);color:var(--dark);}
+.t-green{background:var(--gdim);color:var(--green);}
+.t-amber{background:var(--adim);color:var(--amber);}
+.t-red{background:var(--rdim);color:var(--red);}
+.t-purple{background:var(--pdim);color:var(--purple);}
+.t-teal{background:var(--tdim);color:var(--teal);}
+.sec-title{font-family:'Syne',sans-serif;font-size:20px;font-weight:700;color:var(--dark);margin-bottom:4px;}
+.sec-desc{color:var(--text3);font-size:12px;line-height:1.6;max-width:720px;}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0;}
+.metric{background:var(--surf2);border:1px solid var(--br);border-radius:var(--r);padding:14px;}
+.metric.hl{background:var(--dark);border-color:var(--dark);}
+.m-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text4);margin-bottom:5px;}
+.metric.hl .m-label{color:#94C4D9;}
+.m-val{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--dark);}
+.metric.hl .m-val{color:var(--blue);}
+.m-sub{font-size:10px;color:var(--text4);margin-top:2px;}
+.metric.hl .m-sub{color:#94C4D9;}
+.tbl{width:100%;border-collapse:collapse;}
+.tbl th{background:var(--dark);color:#fff;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:9px 12px;text-align:left;}
+.tbl td{padding:9px 12px;border-bottom:1px solid var(--br);font-size:12px;color:var(--text3);}
+.tbl tr:last-child td{border-bottom:none;}
+.tbl tr:hover td{background:var(--surf2);}
+.tbl .mono{font-family:'DM Mono',monospace;color:var(--dark);font-weight:500;}
+.tbl .hi{color:var(--blue2);font-family:'DM Mono',monospace;font-weight:600;}
+.tbl .ok{color:var(--green);font-family:'DM Mono',monospace;}
+.badge{display:inline-block;font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;letter-spacing:.3px;}
+.b-req{background:var(--rdim);color:var(--red);}
+.b-inc{background:var(--gdim);color:var(--green);}
+.b-opt{background:var(--adim);color:var(--amber);}
+.b-na{background:var(--surf3);color:var(--text4);}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--br);}
+.toggle-row:last-child{border-bottom:none;}
+.tgl-lbl{font-size:12px;color:var(--text2);}
+.tgl-sub{font-size:10px;color:var(--text4);margin-top:1px;}
+.switch{position:relative;width:36px;height:20px;flex-shrink:0;}
+.switch input{opacity:0;width:0;height:0;}
+.slider{position:absolute;inset:0;background:var(--br);border-radius:99px;transition:.2s;cursor:pointer;}
+.slider::before{content:'';position:absolute;width:14px;height:14px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.switch input:checked+.slider{background:var(--blue);}
+.switch input:checked+.slider::before{transform:translateX(16px);}
+.price-row{display:grid;grid-template-columns:1fr 110px;gap:8px;align-items:end;}
+.pfx{position:relative;}
+.pfx input{padding-left:24px;}
+.pfx::before{content:'$';position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--text4);font-size:12px;z-index:1;}
+hr.div{border:none;border-top:1px solid var(--br);margin:16px 0;}
+.sub-sec{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text3);margin:18px 0 10px;padding-bottom:5px;border-bottom:2px solid var(--blue);text-transform:uppercase;letter-spacing:.6px;}
+.code-out{background:#001524;border:1px solid var(--br);border-radius:var(--r);padding:16px;font-family:'DM Mono',monospace;font-size:12px;color:#A5F3FC;line-height:1.7;white-space:pre;overflow-x:auto;max-height:550px;overflow-y:auto;}
+.sb-total{background:var(--dark);border-radius:var(--rl);padding:16px;margin-top:18px;}
+.sb-total-label{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#94C4D9;margin-bottom:7px;}
+.sb-total-val{font-family:'DM Mono',monospace;font-size:24px;font-weight:500;color:var(--blue);}
+.sb-total-sub{font-size:10px;color:#94C4D9;margin-top:3px;}
+.totals-blk{background:var(--dark);border-radius:var(--rl);padding:20px;margin-top:18px;}
+.tot-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.1);}
+.tot-row:last-child{border-bottom:none;padding-top:12px;margin-top:4px;}
+.tot-lbl{font-size:12px;color:#94C4D9;}
+.tot-val{font-family:'DM Mono',monospace;font-size:13px;color:var(--blue);}
+.tot-row.grand .tot-lbl{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:#fff;}
+.tot-row.grand .tot-val{font-size:20px;color:#4ADE80;}
+.section{display:none;}
+.section.act{display:block;}
+.footer{background:var(--dark);color:#fff;padding:16px 28px;display:flex;align-items:center;justify-content:space-between;font-size:11px;}
+.footer-brand{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--blue);}
+/* Opt cards */
+.opt-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
+.opt-card{background:var(--surf);border:2px solid var(--br);border-radius:var(--rl);padding:14px 10px;cursor:pointer;transition:all .15s;text-align:center;user-select:none;}
+.opt-card:hover{border-color:var(--blue);background:var(--lb);}
+.opt-card.sel{border-color:var(--blue);background:var(--lb);box-shadow:0 0 0 3px var(--lb2);}
+.opt-card-i{font-size:22px;margin-bottom:5px;}
+.opt-card-t{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:var(--text2);}
+.opt-card.sel .opt-card-t{color:var(--dark);}
+.opt-card-s{font-size:9px;color:var(--text4);margin-top:2px;line-height:1.3;}
+/* HLD output styles */
+.hld-doc{background:#fff;border:1px solid var(--br);border-radius:var(--rl);padding:40px;max-width:900px;margin:0 auto;font-size:13px;line-height:1.7;color:#1A202C;}
+.hld-cover{text-align:center;padding:40px 0 60px;border-bottom:3px solid var(--blue);margin-bottom:40px;}
+.hld-logo{width:60px;height:60px;background:var(--dark);border-radius:12px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-family:'DM Mono',monospace;font-size:11px;color:var(--blue);}
+.hld-doc-title{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;color:var(--dark);margin-bottom:8px;}
+.hld-doc-subtitle{font-size:16px;color:var(--text3);margin-bottom:24px;}
+.hld-meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;text-align:left;max-width:500px;margin:24px auto 0;}
+.hld-meta-row{display:flex;gap:8px;font-size:12px;}
+.hld-meta-key{font-weight:700;color:var(--text4);min-width:100px;}
+.hld-meta-val{color:var(--text2);}
+.hld-toc{margin:0 0 40px;}
+.hld-toc-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:var(--dark);margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid var(--blue);}
+.hld-toc-item{display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:var(--text3);border-bottom:1px dotted var(--br);}
+.hld-toc-item span:first-child{font-weight:600;color:var(--text2);}
+.hld-section{margin-bottom:36px;}
+.hld-h1{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;color:#fff;background:var(--dark);padding:10px 16px;border-radius:var(--r) var(--r) 0 0;margin-bottom:0;}
+.hld-h1-body{border:1px solid var(--br);border-top:none;border-radius:0 0 var(--r) var(--r);padding:16px;}
+.hld-h2{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;color:var(--dark);border-left:4px solid var(--blue);padding-left:10px;margin:20px 0 10px;}
+.hld-h3{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--mid);margin:14px 0 8px;}
+.hld-p{margin-bottom:10px;line-height:1.75;}
+.hld-table{width:100%;border-collapse:collapse;margin:10px 0 16px;font-size:12px;}
+.hld-table th{background:var(--dark);color:#fff;padding:8px 12px;text-align:left;font-size:11px;letter-spacing:.3px;}
+.hld-table td{padding:7px 12px;border-bottom:1px solid var(--br);color:var(--text2);}
+.hld-table tr:nth-child(even) td{background:var(--surf2);}
+.hld-callout{background:var(--lb);border:1px solid var(--blue)44;border-left:4px solid var(--blue);border-radius:0 var(--r) var(--r) 0;padding:12px 16px;margin:12px 0;font-size:12px;}
+.hld-warn{background:var(--adim);border-left:4px solid var(--amber);border-radius:0 var(--r) var(--r) 0;padding:12px 16px;margin:12px 0;font-size:12px;color:var(--amber);}
+.hld-badge-row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;}
+.hld-badge{background:var(--lb);border:1px solid var(--blue)44;border-radius:99px;padding:3px 10px;font-size:10px;font-weight:700;color:var(--dark);}
+@media print{
+  .topbar,.sidebar,#print-btn,#gen-btn,.btn-ghost,.btn-primary:not(#gen-btn){display:none!important;}
+  .layout{display:block;}
+  .main-area{padding:0;}
+  .section{display:block!important;}
+  .hld-doc{border:none;padding:20px;}
+  @page{margin:15mm;size:A4;}
+}
+
+.sz-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;}
+.result-box{background:var(--dark);color:#fff;border-radius:var(--rl);padding:20px;margin-top:20px;}
+.result-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--blue);margin-bottom:14px;}
+.result-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.08);}
+.result-row:last-child{border-bottom:none;}
+.result-key{font-size:11px;color:#94C4D9;}
+.result-val{font-family:'DM Mono',monospace;font-size:13px;color:var(--blue);font-weight:500;}
+.result-val.ok{color:#4ADE80;}
+.result-val.warn{color:#FCD34D;}
+.result-val.err{color:#F87171;}
+.tab-row{display:flex;gap:6px;margin-bottom:20px;border-bottom:2px solid var(--br);padding-bottom:0;}
+.tab-btn{padding:9px 18px;border:none;background:transparent;color:var(--text4);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;}
+.tab-btn.act{color:var(--dark);border-bottom-color:var(--blue);}
+.tab-btn:hover{color:var(--text2);}
+.tab-pane{display:none;}
+.tab-pane.act{display:block;}
+.platform-result{background:var(--surf2);border:2px solid var(--br);border-radius:var(--rl);padding:16px;margin-top:10px;}
+.platform-result.recommended{border-color:var(--blue);background:var(--lb);}
+.pr-title{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;color:var(--dark);}
+.pr-badge{display:inline-block;background:var(--blue);color:var(--dark);font-size:9px;font-weight:700;padding:2px 8px;border-radius:99px;margin-left:8px;letter-spacing:.3px;}
+.pr-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text3);padding:4px 0;border-bottom:1px solid var(--br);}
+.pr-row:last-child{border-bottom:none;}
+.pr-val{font-family:'DM Mono',monospace;color:var(--dark);font-weight:500;}
+</style>
+</head>
+<body>
+<div class="topbar"><div class="tb-l"><div class="tb-badge">SZ</div><div><div class="tb-title">Cisco UC Sizing Tool</div><div class="tb-sub">CUCM · SME · Unity Connection · IM&P · Bandwidth — Based on Cisco PA Sizing Guide R14/R15</div></div></div><div class="tb-nav"><a href="index.html">⌂ Home</a><a href="hld_generator.html">HLD Generator</a><a href="license_calc.html">License Calc</a><a href="bandwidth.html">Network Planner</a><a href="vg_config.html">VG Config Gen</a><a href="sizing_tool.html" class=act>Sizing Tool</a></div></div>
+
+<div class="wrap">
+<div class="sec-hdr" style="text-align:center;max-width:100%;margin-bottom:0;">
+  <span class="sec-tag t-blue" style="margin:0 auto 8px;display:block;width:fit-content;">Cisco Collaboration Sizing Tool — HTML Edition</span>
+  <h2 class="sec-title" style="font-size:28px;text-align:center;">Cisco UC Sizing Tool</h2>
+  <p class="sec-desc" style="text-align:center;margin:0 auto 8px;">Based on Cisco Collaboration Sizing Guide for Release 14 SU1 &amp; Release 15 (PA Sizing Methodology).</p>
+  <p style="font-size:11px;color:var(--text4);text-align:center;margin-bottom:24px;">Web equivalent of CiscoSizingTool.exe &amp; CiscoSizingTool_SME.exe · For full accuracy use the official Cisco Sizing Tool from <a href="https://www.cisco.com/c/en/us/td/docs/solutions/PA/size/sizing15.pdf" target="_blank">cisco.com</a></p>
+</div>
+
+<div class="tab-row">
+  <button class="tab-btn act" onclick="switchTab('cucm',this)">CUCM Cluster Sizing</button>
+  <button class="tab-btn" onclick="switchTab('sme',this)">SME Sizing</button>
+  <button class="tab-btn" onclick="switchTab('cuc',this)">Unity Connection Sizing</button>
+  <button class="tab-btn" onclick="switchTab('imp',this)">IM &amp;P Sizing</button>
+  <button class="tab-btn" onclick="switchTab('bw',this)">Bandwidth Sizing</button>
+</div>
+
+<!-- CUCM SIZING -->
+<div id="tab-cucm" class="tab-pane act">
+  <div class="ibox"><strong>Cisco Sizing Methodology (Release 15):</strong> Sizing uses BHCA (Busy Hour Call Attempts), device count, and CPU/memory linear models. OVA size determines max users and features per node. This tool implements the simplified sizing rules from the Cisco PA Sizing Guide.</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--blue)"></span>User &amp; Device Profile</div>
+      <div class="field"><label>Total Cisco Unified CM Users</label><input type="number" id="cs-users" value="1000" min="1" max="80000" oninput="sizeCUCM()"/><div class="help">Max per cluster: 80,000 users across all nodes.</div></div>
+      <div class="field"><label>User BHCA (Busy Hour Call Attempts per user)</label>
+        <select id="cs-bhca" onchange="sizeCUCM()">
+          <option value="0.5">0.5 BHCA — Light (remote/mobile users)</option>
+          <option value="1">1 BHCA — Low (average office user)</option>
+          <option value="2">2 BHCA — Light-medium</option>
+          <option value="4">4 BHCA — Medium (typical enterprise)</option>
+          <option value="6" selected>6 BHCA — Medium-high (active users)</option>
+          <option value="8">8 BHCA — High (sales, support)</option>
+          <option value="10">10 BHCA — Very High</option>
+          <option value="15">15 BHCA — Call centre agent</option>
+        </select></div>
+      <div class="field"><label>Average Call Hold Time (ACHT seconds)</label>
+        <select id="cs-acht" onchange="sizeCUCM()">
+          <option value="120">120 sec (2 min) — Short</option>
+          <option value="180" selected>180 sec (3 min) — Standard</option>
+          <option value="240">240 sec (4 min)</option>
+          <option value="300">300 sec (5 min) — Long</option>
+        </select></div>
+      <div class="field"><label>Device Protocol Mix</label>
+        <select id="cs-proto" onchange="sizeCUCM()">
+          <option value="sccp">SCCP only (traditional Cisco phones)</option>
+          <option value="sip-only" selected>SIP only (recommended — modern deployments)</option>
+          <option value="mixed">Mixed SIP + SCCP</option>
+        </select></div>
+      <div class="field"><label>Devices per User (average)</label>
+        <select id="cs-devpu" onchange="sizeCUCM()">
+          <option value="1" selected>1 device per user (standard)</option>
+          <option value="2">2 devices per user (phone + Jabber)</option>
+          <option value="3">3 devices per user (phone + desktop + mobile)</option>
+        </select></div>
+      <div class="field"><label>Security Mode</label>
+        <select id="cs-sec" onchange="sizeCUCM()">
+          <option value="nonsec">Non-secure (no encryption)</option>
+          <option value="mixed" selected>Mixed mode (SRTP + signalling encryption)</option>
+          <option value="secure">Full secure (all devices SRTP)</option>
+        </select></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--blue)"></span>Feature &amp; Traffic Profile</div>
+      <div class="field"><label>Conference / Transfer Mix (%)</label>
+        <select id="cs-conf" onchange="sizeCUCM()">
+          <option value="0.05">5% of calls use conference/transfer (light)</option>
+          <option value="0.10" selected>10% — standard enterprise</option>
+          <option value="0.20">20% — active conferencing</option>
+          <option value="0.30">30% — heavy conferencing</option>
+        </select></div>
+      <div class="field"><label>CTI / JTAPI Applications</label>
+        <select id="cs-cti" onchange="sizeCUCM()">
+          <option value="none" selected>None</option>
+          <option value="light">Light (≤10% users have CTI)</option>
+          <option value="medium">Medium (10–30% users)</option>
+          <option value="heavy">Heavy (contact centre — &gt;30%)</option>
+        </select></div>
+      <div class="field"><label>CDR / CMR Generation</label>
+        <select id="cs-cdr" onchange="sizeCUCM()">
+          <option value="none">Disabled (no CDR)</option>
+          <option value="cdr" selected>CDR only</option>
+          <option value="both">CDR + CMR (increases CPU)</option>
+        </select></div>
+      <div class="field"><label>Shared Lines (%)</label>
+        <select id="cs-shared" onchange="sizeCUCM()">
+          <option value="0" selected>None</option>
+          <option value="0.10">10%</option>
+          <option value="0.20">20%</option>
+          <option value="0.30">30%</option>
+        </select></div>
+      <div class="field"><label>IM &amp;P Users (Jabber)</label>
+        <select id="cs-imp" onchange="sizeCUCM()">
+          <option value="0" selected>None / separate IMP cluster</option>
+          <option value="0.50">50% of users</option>
+          <option value="0.75">75% of users</option>
+          <option value="1.00">All users have Jabber</option>
+        </select></div>
+      <div class="field"><label>Deployment Type</label>
+        <select id="cs-deploy" onchange="sizeCUCM()">
+          <option value="single" selected>Single cluster</option>
+          <option value="multi">Multi-cluster (geographically distributed)</option>
+          <option value="sme">Multiple clusters + SME</option>
+        </select></div>
+    </div>
+  </div>
+  <div id="cucm-results" style="margin-top:16px;"></div>
+</div>
+
+<!-- SME SIZING -->
+<div id="tab-sme" class="tab-pane">
+  <div class="ibox"><strong>SME Sizing (CiscoSizingTool_SME.exe equivalent):</strong> SME (Session Management Edition) is a specialised CUCM deployment for centralised dial plan management across multiple leaf clusters. Sizing is based on DN count, concurrent calls, and inter-cluster traffic patterns.</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--purple)"></span>SME Input Parameters</div>
+      <div class="field"><label>Total DNs (Directory Numbers) across all clusters</label><input type="number" id="sme-dns" value="5000" min="100" max="1000000" oninput="sizeSME()"/><div class="help">SME supports up to 1,000,000 DNs in the dial plan.</div></div>
+      <div class="field"><label>Number of Leaf CUCM Clusters</label><input type="number" id="sme-clusters" value="3" min="2" max="20" oninput="sizeSME()"/></div>
+      <div class="field"><label>Inter-Cluster Calls (% of total BHCA)</label>
+        <select id="sme-ic-pct" onchange="sizeSME()">
+          <option value="0.20">20% (light inter-cluster)</option>
+          <option value="0.30" selected>30% (standard)</option>
+          <option value="0.50">50% (heavy inter-cluster)</option>
+          <option value="0.70">70% (very heavy)</option>
+        </select></div>
+      <div class="field"><label>Total User BHCA across all clusters</label>
+        <select id="sme-bhca" onchange="sizeSME()">
+          <option value="4">4 BHCA</option>
+          <option value="6" selected>6 BHCA (standard)</option>
+          <option value="8">8 BHCA</option>
+          <option value="10">10 BHCA</option>
+        </select></div>
+      <div class="field"><label>PSTN Trunks Centralized on SME</label>
+        <select id="sme-pstn" onchange="sizeSME()">
+          <option value="none" selected>No centralized PSTN (trunks on leaf clusters)</option>
+          <option value="partial">Partial (some PSTN on SME)</option>
+          <option value="full">Full (all PSTN centralized on SME)</option>
+        </select></div>
+      <div class="field"><label>Total Users across all clusters</label><input type="number" id="sme-users" value="5000" min="100" oninput="sizeSME()"/></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--purple)"></span>SME Deployment Architecture</div>
+      <div class="ibox" style="margin-bottom:10px;">SME is based on a specialised CUCM deployment. It primarily handles SIP signalling (no voice media). Each SME node handles trunk traffic between leaf clusters and external gateways.</div>
+      <div class="field"><label>SIP Trunk Type to Leaf Clusters</label>
+        <select id="sme-trunk-type" onchange="sizeSME()">
+          <option value="sip-tcp">SIP over TCP (standard)</option>
+          <option value="sip-tls">SIP over TLS (secure)</option>
+        </select></div>
+      <div class="field"><label>Hunt Group / Route List Complexity</label>
+        <select id="sme-rg" onchange="sizeSME()">
+          <option value="simple" selected>Simple (≤100 route groups)</option>
+          <option value="medium">Medium (100–1000 route groups)</option>
+          <option value="complex">Complex (&gt;1000 route groups)</option>
+        </select></div>
+      <div class="field"><label>HA Required?</label>
+        <select id="sme-ha" onchange="sizeSME()">
+          <option value="yes" selected>Yes — Publisher + Subscriber pairs</option>
+          <option value="no">No — single node (lab/test only)</option>
+        </select></div>
+    </div>
+  </div>
+  <div id="sme-results" style="margin-top:16px;"></div>
+</div>
+
+<!-- CUC SIZING -->
+<div id="tab-cuc" class="tab-pane">
+  <div class="ibox">Unity Connection sizing is based on mailbox count, message storage, and concurrent voicemail sessions (VMXI + SMTP). CUC v15 supports up to 60,000 users per cluster.</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--amber)"></span>CUC Input</div>
+      <div class="field"><label>Total Voicemail Users</label><input type="number" id="cuc-users" value="500" oninput="sizeCUC()"/></div>
+      <div class="field"><label>Average Mailbox Size (MB)</label><input type="number" id="cuc-mb" value="50" oninput="sizeCUC()"/></div>
+      <div class="field"><label>Concurrent VM Sessions</label><input type="number" id="cuc-sessions" value="50" oninput="sizeCUC()"/><div class="help">Typically 5–10% of users simultaneously accessing VM.</div></div>
+      <div class="field"><label>Unity to Exchange/O365 Integration?</label><select id="cuc-exchange" onchange="sizeCUC()"><option value="no">No</option><option value="yes">Yes — Unified Messaging</option></select></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--amber)"></span>CUC Options</div>
+      <div class="field"><label>Auto Attendant Sessions</label><input type="number" id="cuc-aa" value="4" oninput="sizeCUC()"/></div>
+      <div class="field"><label>VPIM Networking (inter-cluster VM)?</label><select id="cuc-vpim" onchange="sizeCUC()"><option value="no">No</option><option value="yes">Yes</option></select></div>
+      <div class="field"><label>Deployment Model</label><select id="cuc-deploy" onchange="sizeCUC()"><option value="single" selected>Single server (pub only)</option><option value="ha">HA pair (pub + sub)</option></select></div>
+    </div>
+  </div>
+  <div id="cuc-results" style="margin-top:16px;"></div>
+</div>
+
+<!-- IMP SIZING -->
+<div id="tab-imp" class="tab-pane">
+  <div class="ibox">IM&amp;P (Cisco Unified Presence / Jabber) sizing. Maximum 25,000 users per IM&amp;P node in sub-cluster mode. Each sub-cluster supports up to 25,000 users with publisher + subscriber.</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--teal)"></span>IM&amp;P Input</div>
+      <div class="field"><label>Total IM&amp;P / Jabber Users</label><input type="number" id="imp-users" value="500" oninput="sizeIMP()"/></div>
+      <div class="field"><label>Average Contacts per User</label><input type="number" id="imp-contacts" value="50" oninput="sizeIMP()"/></div>
+      <div class="field"><label>Persistent Chat Enabled?</label><select id="imp-chat" onchange="sizeIMP()"><option value="no" selected>No</option><option value="yes">Yes</option></select></div>
+      <div class="field"><label>Federation (XMPP/SIP)?</label><select id="imp-fed" onchange="sizeIMP()"><option value="no" selected>No</option><option value="yes">Yes</option></select></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--teal)"></span>IM&amp;P Options</div>
+      <div class="field"><label>Deployment Model</label><select id="imp-deploy" onchange="sizeIMP()"><option value="single" selected>Single sub-cluster</option><option value="multi">Multiple sub-clusters</option></select></div>
+      <div class="field"><label>HA Required?</label><select id="imp-ha" onchange="sizeIMP()"><option value="yes" selected>Yes — Pub + Sub</option><option value="no">No</option></select></div>
+      <div class="field"><label>Webex (Cloud) IM vs On-Prem</label><select id="imp-cloud" onchange="sizeIMP()"><option value="onprem" selected>On-premises IM&amp;P</option><option value="cloud">Webex cloud messaging (no IMP needed)</option></select></div>
+    </div>
+  </div>
+  <div id="imp-results" style="margin-top:16px;"></div>
+</div>
+
+<!-- BANDWIDTH SIZING -->
+<div id="tab-bw" class="tab-pane">
+  <div class="ibox">Bandwidth sizing using Erlang-B / Erlang-C traffic models as per Cisco PA sizing methodology. Based on concurrent call calculations from BHCA and ACHT inputs.</div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--teal)"></span>Traffic Engineering</div>
+      <div class="field"><label>Total Users</label><input type="number" id="bw-users" value="1000" oninput="sizeBW()"/></div>
+      <div class="field"><label>User BHCA</label><select id="bw-bhca" onchange="sizeBW()"><option value="2">2</option><option value="4">4</option><option value="6" selected>6</option><option value="8">8</option><option value="10">10</option></select></div>
+      <div class="field"><label>ACHT (seconds)</label><select id="bw-acht" onchange="sizeBW()"><option value="120">120s</option><option value="180" selected>180s (3 min)</option><option value="240">240s</option><option value="300">300s</option></select></div>
+      <div class="field"><label>% Calls going to PSTN/external</label><select id="bw-ext-pct" onchange="sizeBW()"><option value="0.20">20%</option><option value="0.30" selected>30%</option><option value="0.50">50%</option><option value="0.70">70%</option></select></div>
+      <div class="field"><label>Voice Codec</label><select id="bw-codec" onchange="sizeBW()"><option value="87">G.711 (87 kbps with headers)</option><option value="87">G.722 (87 kbps — wideband)</option><option value="24">G.729 (24 kbps)</option><option value="50">Opus (50 kbps — Webex)</option></select></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="cdot" style="background:var(--teal)"></span>Grade of Service</div>
+      <div class="field"><label>GoS / Blocking Probability</label><select id="bw-gos" onchange="sizeBW()"><option value="0.01">P.01 — 1% blocking (enterprise standard)</option><option value="0.005">P.005 — 0.5% (high quality)</option><option value="0.001">P.001 — 0.1% (critical)</option></select></div>
+      <div class="field"><label>Video Users (% with video)</label><input type="number" id="bw-vid-pct" value="20" min="0" max="100" oninput="sizeBW()"/></div>
+      <div class="field"><label>Video Quality</label><select id="bw-vid-q" onchange="sizeBW()"><option value="512">360p (512 kbps)</option><option value="1000" selected>720p HD (1 Mbps)</option><option value="1500">1080p (1.5 Mbps)</option></select></div>
+      <div class="field"><label>Bandwidth Headroom %</label><select id="bw-hd" onchange="sizeBW()"><option value="1.15">15%</option><option value="1.20" selected>20%</option><option value="1.25">25%</option><option value="1.30">30%</option></select></div>
+    </div>
+  </div>
+  <div id="bw-results" style="margin-top:16px;"></div>
+</div>
+
+</div>
+<footer class="footer"><div><span class="footer-brand">Cisco UC &amp; Webex Suite</span><span style="color:#94C4D9;margin:0 8px;">·</span><span style="color:#94C4D9;">Professional Tools Suite</span></div><div style="color:#94C4D9;">Designed &amp; developed by <strong style="color:var(--blue);">Sumit Rustagi</strong></div></footer>
+<script>
+// ── PLATFORM DATA (Cisco Collaboration Sizing Guide Release 15) ───────────────
+var CUCM_OVA = {
+  small:  {name:'Small OVA',   users:1000, disks:80,  cpu:4,  ram:8,  hdd:80,  note:'VMware: 4 vCPU, 8 GB RAM, 80 GB HDD. KVM supported. 1,000 users max.'},
+  medium: {name:'Medium OVA',  users:2500, disks:80,  cpu:4,  ram:16, hdd:80,  note:'VMware: 4 vCPU, 16 GB RAM, 80 GB HDD. 2,500 users max.'},
+  large:  {name:'Large OVA',   users:5000, disks:80,  cpu:8,  ram:16, hdd:80,  note:'VMware: 8 vCPU, 16 GB RAM, 80 GB HDD. 5,000 users max per node.'},
+  xl:     {name:'X-Large OVA', users:10000,disks:80,  cpu:16, ram:32, hdd:80,  note:'VMware: 16 vCPU, 32 GB RAM, 80 GB HDD. 10,000 users max per node.'},
+  physical:{name:'UCS M6 (Physical)',users:40000,disks:300,cpu:24,ram:256,hdd:300,note:'Cisco UCS C220/C240 M6. 40,000 users per sub-cluster node. For very large deployments.'},
+};
+// Max concurrent calls per OVA type (Rule: ~200 CPS total system, varies by OVA)
+var CUCM_MAXCALLS = {small:500,medium:1000,large:2000,xl:5000,physical:30000};
+// CPU multipliers for features
+var CPU_MULT = {sccp:1.2,'sip-only':1.0,mixed:1.1};
+var SEC_MULT = {nonsec:1.0,mixed:1.15,secure:1.25};
+var CDR_ADD = {none:0,cdr:0.05,both:0.10};
+var CTI_ADD = {none:0,light:0.05,medium:0.10,heavy:0.20};
+var CONF_ADD = {0.05:0.02,0.10:0.05,0.20:0.10,0.30:0.15};
+
+function n(id){return parseFloat(document.getElementById(id)?.value)||0;}
+function sv(id){return document.getElementById(id)?.value||'';}
+
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('act'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('act'));
+  document.getElementById('tab-'+id).classList.add('act');
+  btn.classList.add('act');
+}
+
+// ── CUCM SIZING ───────────────────────────────────────────────────────────────
+function sizeCUCM(){
+  var users=n('cs-users'),bhca=parseFloat(sv('cs-bhca')||6),acht=parseFloat(sv('cs-acht')||180);
+  var proto=sv('cs-proto'),devPU=parseFloat(sv('cs-devpu')||1),sec=sv('cs-sec');
+  var confPct=parseFloat(sv('cs-conf')||0.10),cti=sv('cs-cti'),cdr=sv('cs-cdr');
+  var shared=parseFloat(sv('cs-shared')||0),impPct=parseFloat(sv('cs-imp')||0);
+  var deploy=sv('cs-deploy');
+  // System BHCA
+  var sysBHCA=users*bhca;
+  var callsPerSec=sysBHCA/3600;
+  var totalDevices=Math.ceil(users*devPU);
+  // Concurrent calls (Erlang-A simplified: E = λ * h)
+  var erlang=(sysBHCA/3600)*acht; // Erlangs offered
+  // Conservative: concurrent ≈ Erlang * 1.2 for P.01
+  var concurrent=Math.ceil(erlang*1.2);
+  // CPU load estimate (normalised to Large OVA baseline = 100%)
+  var cpuBase=100;
+  var cpuUsers=(users/5000)*100; // 100% at 5000 users (Large OVA)
+  var cpuCalls=(concur)=>(concur/2000)*100; // 100% at 2000 concurrent
+  var cpuTotal=cpuUsers*CPU_MULT[proto]*SEC_MULT[sec]*(1+CDR_ADD[cdr]+CTI_ADD[cti]+parseFloat(confPct)*0.5+(shared*0.3));
+  // Determine OVA
+  var ovaKeys=Object.keys(CUCM_OVA);
+  var selectedOVA=ovaKeys.find(k=>CUCM_OVA[k].users>=users)||'physical';
+  // For large deployments, calc nodes needed
+  var maxPerNode=CUCM_OVA[selectedOVA].users;
+  var nodesNeeded=Math.ceil(users/maxPerNode);
+  // Add HA nodes (1 Sub per Pub)
+  var totalNodes=nodesNeeded*2; // Publisher + Subscriber
+  // IMP sizing
+  var impUsers=Math.ceil(users*impPct);
+  var impNodes=impUsers>0?Math.ceil(impUsers/25000)*2:0;
+  // Build results HTML
+  var r='<div class="card-title"><span class="cdot" style="background:var(--green)"></span>CUCM Sizing Results</div>';
+  r+='<div class="platform-result recommended">';
+  r+='<div class="pr-title">'+CUCM_OVA[selectedOVA].name+'<span class="pr-badge">RECOMMENDED</span></div>';
+  r+='<p style="font-size:11px;color:var(--text3);margin:6px 0 12px;">'+CUCM_OVA[selectedOVA].note+'</p>';
+  var rows=[
+    ['Total Users',users.toLocaleString()],
+    ['Total Devices',totalDevices.toLocaleString()],
+    ['System BHCA (total)',sysBHCA.toLocaleString()],
+    ['Calls Per Second (busy hour)',callsPerSec.toFixed(2)+' CPS'],
+    ['Offered Traffic Load',erlang.toFixed(1)+' Erlang'],
+    ['Estimated Concurrent Calls',concur(erlang)],
+    ['CUCM Nodes Needed (Pub+Sub)',totalNodes+' nodes ('+nodesNeeded+' publisher'+(nodesNeeded>1?'s':'')+')'],
+    ['OVA Platform',CUCM_OVA[selectedOVA].name],
+    ['CPU / vCPU (per node)',CUCM_OVA[selectedOVA].cpu+' vCPU'],
+    ['RAM (per node)',CUCM_OVA[selectedOVA].ram+' GB'],
+    ['HDD (per node)',CUCM_OVA[selectedOVA].hdd+' GB'],
+    ['CPU Utilisation Est.',Math.min(99,Math.round(cpuTotal))+'%'],
+    ['IM&P Users (if enabled)',impUsers>0?impUsers.toLocaleString():'Not configured'],
+    ['IM&P Nodes',impNodes>0?impNodes+' nodes':'N/A'],
+    ['Deployment Type',deploy==='single'?'Single cluster':deploy==='multi'?'Multi-cluster':'Multi-cluster + SME'],
+  ];
+  rows.forEach(([k,v])=>{r+='<div class="pr-row"><span>'+k+'</span><span class="pr-val">'+v+'</span></div>';});
+  r+='</div>';
+  // Additional OVA options
+  if(selectedOVA!=='physical'){
+    r+='<div style="margin-top:10px;"><div style="font-size:11px;font-weight:700;color:var(--text4);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;">Alternative Platforms</div>';
+    ovaKeys.filter(k=>CUCM_OVA[k].users>=users&&k!==selectedOVA).slice(0,2).forEach(k=>{
+      var o=CUCM_OVA[k];
+      r+='<div class="platform-result" style="margin-bottom:8px;">';
+      r+='<div class="pr-title">'+o.name+'</div>';
+      r+='<div class="pr-row"><span>Max users/node</span><span class="pr-val">'+o.users.toLocaleString()+'</span></div>';
+      r+='<div class="pr-row"><span>vCPU / RAM</span><span class="pr-val">'+o.cpu+' vCPU / '+o.ram+' GB</span></div>';
+      r+='</div>';
+    });
+    r+='</div>';
+  }
+  // Recommendations
+  r+='<div class="ibox" style="margin-top:12px;"><strong>Design Notes:</strong><ul style="margin:6px 0 0 16px;font-size:11px;line-height:1.8;">';
+  r+='<li>Use the official <a href="https://www.cisco.com/c/dam/en/us/td/docs/solutions/PA/size/sizing15.pdf" target="_blank">Cisco Sizing Tool (sizing15.pdf)</a> for final validation.</li>';
+  if(users>5000)r+='<li>Large deployment: consider dedicated TFTP server(s) and additional Subscriber nodes for regional resilience.</li>';
+  if(sec==='secure'||sec==='mixed')r+='<li>Mixed mode enabled: CAPF must be configured for LSC issuance. Factor additional CPU for encryption overhead (+15%).</li>';
+  if(cti!=='none')r+='<li>CTI/JTAPI load adds CPU overhead. Ensure application servers are sized for the CTI link connection count.</li>';
+  if(deploy==='sme')r+='<li>SME deployment: refer to the SME Sizing tab for dedicated SME cluster sizing recommendations.</li>';
+  r+='</ul></div>';
+  document.getElementById('cucm-results').innerHTML=r;
+}
+function concur(erlang){return Math.ceil(erlang*1.2).toLocaleString();}
+
+// ── SME SIZING ────────────────────────────────────────────────────────────────
+function sizeSME(){
+  var dns=n('sme-dns')||5000;
+  var clusters=parseInt(document.getElementById('sme-clusters').value)||3;
+  var icPct=parseFloat(sv('sme-ic-pct')||0.30);
+  var bhca=parseFloat(sv('sme-bhca')||6);
+  var users=n('sme-users')||5000;
+  var pstn=sv('sme-pstn');var rg=sv('sme-rg');var ha=sv('sme-ha')==='yes';
+  // SME call rate = inter-cluster portion of total BHCA
+  var totalBHCA=users*bhca;
+  var smeBHCA=totalBHCA*icPct;
+  var smeCPS=smeBHCA/3600;
+  // SME DN table: ~5 KB per DN for dial plan data (from PA sizing guide)
+  var dialPlanMB=Math.ceil(dns*5/1024);
+  // SME nodes: 1 node handles ~100 trunks, each cluster needs ~2 trunks
+  // SME OVA: typically Large (5000+ DNs = Large)
+  var smeOVA=dns<=10000?'Large OVA (8 vCPU, 16 GB RAM)':dns<=50000?'XL OVA (16 vCPU, 32 GB RAM)':'Physical UCS (24 vCPU, 256 GB RAM)';
+  var smeNodes=ha?2:1;
+  var trunkCount=clusters*2; // 2 SIP trunks per leaf cluster (Pub + Sub or primary + backup)
+  var r='<div class="card-title"><span class="cdot" style="background:var(--purple)"></span>SME Sizing Results</div>';
+  r+='<div class="platform-result recommended">';
+  r+='<div class="pr-title">SME Cluster Recommendation<span class="pr-badge">RECOMMENDED</span></div>';
+  var rows=[
+    ['Total DNs in Dial Plan',dns.toLocaleString()],
+    ['Number of Leaf Clusters',clusters],
+    ['Total Users (all clusters)',users.toLocaleString()],
+    ['SME BHCA (inter-cluster)',Math.round(smeBHCA).toLocaleString()],
+    ['SME Calls Per Second',smeCPS.toFixed(2)+' CPS'],
+    ['SIP Trunks to Leaf Clusters',trunkCount+' trunks ('+clusters+' clusters × 2)'],
+    ['Dial Plan Table Size Est.',dialPlanMB+' MB ('+dns.toLocaleString()+' DNs × 5 KB)'],
+    ['SME Platform',smeOVA],
+    ['SME Nodes Required',smeNodes+(ha?' (Pub + Sub — HA)':' (single — no HA)')],
+    ['Route Group Complexity',rg==='simple'?'Simple (≤100 RGs)':rg==='medium'?'Medium (100–1000 RGs)':'Complex (>1000 RGs)'],
+    ['PSTN Centralisation',pstn==='full'?'All PSTN on SME':pstn==='partial'?'Partial PSTN on SME':'PSTN on leaf clusters only'],
+    ['CUBE Session License Saving',(clusters-1)*2+' sessions saved vs per-cluster trunking'],
+  ];
+  rows.forEach(([k,v])=>{r+='<div class="pr-row"><span>'+k+'</span><span class="pr-val">'+v+'</span></div>';});
+  r+='</div>';
+  r+='<div class="ibox" style="margin-top:12px;"><strong>SME Design Notes:</strong><ul style="margin:6px 0 0 16px;font-size:11px;line-height:1.8;">';
+  r+='<li>SME handles <strong>signalling only</strong> — no voice media passes through SME nodes.</li>';
+  r+='<li>Configure <strong>non-gatekeeper-controlled inter-cluster trunks (ICT)</strong> between SME and each leaf cluster CUCM Publisher.</li>';
+  r+='<li>CUBE connecting to SME requires only <strong>1 SIP trunk to SME</strong> instead of '+clusters+' separate trunks to each leaf cluster — saving '+((clusters-1)*2)+' CUBE session licenses.</li>';
+  r+='<li>SME requires its own Smart License virtual account in CSSM. Separate from leaf cluster licenses.</li>';
+  r+='<li>Refer to <a href="https://www.cisco.com/c/dam/en/us/td/docs/solutions/PA/size/sizing15.pdf" target="_blank">Cisco Sizing Guide Release 15</a> for official SME sizing parameters.</li>';
+  r+='</ul></div>';
+  document.getElementById('sme-results').innerHTML=r;
+}
+
+// ── CUC SIZING ────────────────────────────────────────────────────────────────
+function sizeCUC(){
+  var users=n('cuc-users')||500;var mb=n('cuc-mb')||50;var sessions=n('cuc-sessions')||50;
+  var exchange=sv('cuc-exchange')==='yes';var aa=n('cuc-aa')||4;var ha=sv('cuc-deploy')==='ha';
+  var totalStorage=Math.ceil(users*mb/1024*1.2);// GB with 20% overhead
+  var ovaType=users<=2000?'Small OVA (4 vCPU, 8 GB)':users<=5000?'Medium OVA (4 vCPU, 16 GB)':users<=15000?'Large OVA (8 vCPU, 16 GB)':'XL OVA (16 vCPU, 32 GB)';
+  var nodes=ha?2:1;
+  var r='<div class="card-title"><span class="cdot" style="background:var(--amber)"></span>Unity Connection Sizing</div>';
+  r+='<div class="platform-result recommended">';
+  r+='<div class="pr-title">CUC Cluster Recommendation<span class="pr-badge">RECOMMENDED</span></div>';
+  var rows=[
+    ['Total VM Users',users.toLocaleString()],['Mailbox Storage',totalStorage+' GB ('+users+' × '+mb+' MB + 20% overhead)'],
+    ['Concurrent VM Sessions',sessions+' (VMXI ports)'],['AA Sessions',aa],
+    ['Platform OVA',ovaType],['Nodes',nodes+(ha?' (Pub + Sub — HA)':' (single node)')],
+    ['Exchange/O365 Integration',exchange?'Yes — Unified Messaging':'No'],
+    ['Max Users (CUC v14/v15)','60,000 per cluster'],
+  ];
+  rows.forEach(([k,v])=>{r+='<div class="pr-row"><span>'+k+'</span><span class="pr-val">'+v+'</span></div>';});
+  r+='</div>';
+  document.getElementById('cuc-results').innerHTML=r;
+}
+
+// ── IMP SIZING ────────────────────────────────────────────────────────────────
+function sizeIMP(){
+  var users=n('imp-users')||500;var contacts=n('imp-contacts')||50;
+  var chat=sv('imp-chat')==='yes';var fed=sv('imp-fed')==='yes';
+  var ha=sv('imp-ha')==='yes';var cloud=sv('imp-cloud')==='cloud';
+  if(cloud){document.getElementById('imp-results').innerHTML='<div class="gbox">Webex cloud messaging selected — no on-premises IM&amp;P deployment needed. Users use Webex App for messaging, presence, and file sharing. No IMP cluster required.</div>';return;}
+  var subClusters=Math.ceil(users/25000);
+  var nodes=subClusters*(ha?2:1);
+  var ovaType=users<=5000?'Small OVA (4 vCPU, 8 GB)':users<=15000?'Medium OVA (4 vCPU, 16 GB)':'Large OVA (8 vCPU, 16 GB)';
+  var r='<div class="card-title"><span class="cdot" style="background:var(--teal)"></span>IM&amp;P Sizing</div>';
+  r+='<div class="platform-result recommended">';
+  r+='<div class="pr-title">IM&amp;P Cluster Recommendation<span class="pr-badge">RECOMMENDED</span></div>';
+  var rows=[
+    ['Total IM&P Users',users.toLocaleString()],['Avg Contacts per User',contacts],
+    ['Sub-Clusters Needed',subClusters],['Total Nodes',nodes+(ha?' (Pub+Sub pairs)':' nodes')],
+    ['Platform',ovaType],['Persistent Chat',chat?'Enabled (separate server recommended for >5000 users)':'Disabled'],
+    ['Federation',fed?'Yes — XMPP/SIP federation configured':'No'],['Max per Sub-Cluster','25,000 users'],
+  ];
+  rows.forEach(([k,v])=>{r+='<div class="pr-row"><span>'+k+'</span><span class="pr-val">'+v+'</span></div>';});
+  r+='</div>';
+  document.getElementById('imp-results').innerHTML=r;
+}
+
+// ── BANDWIDTH SIZING ──────────────────────────────────────────────────────────
+function sizeBW(){
+  var users=n('bw-users')||1000;var bhca=parseFloat(sv('bw-bhca')||6);var acht=parseFloat(sv('bw-acht')||180);
+  var extPct=parseFloat(sv('bw-ext-pct')||0.30);var codecBW=parseInt(document.getElementById('bw-codec').value)||87;
+  var vidPct=parseFloat(document.getElementById('bw-vid-pct').value||20)/100;var vidBW=parseInt(sv('bw-vid-q')||1000);
+  var gos=parseFloat(sv('bw-gos')||0.01);var hd=parseFloat(sv('bw-hd')||1.20);
+  // Erlang calculation
+  var totalBHCA=users*bhca;var erlang=(totalBHCA/3600)*acht;
+  var concVoice=Math.ceil(erlang*1.2);
+  var concExternal=Math.ceil(concVoice*extPct);
+  var concVideo=Math.ceil(users*vidPct*0.5);// 50% of video users concurrent
+  var voiceBW=Math.ceil(concExternal*codecBW*hd);
+  var videoBW=Math.ceil(concVideo*vidBW*hd);
+  var totalBW=voiceBW+videoBW;
+  // PSTN trunks (Erlang-B approx: trunks ≈ Erlang + 1.3*sqrt(Erlang))
+  var pstnTrunks=Math.ceil(erlang*extPct+1.3*Math.sqrt(erlang*extPct));
+  var r='<div class="card-title"><span class="cdot" style="background:var(--teal)"></span>Bandwidth &amp; Trunk Sizing</div>';
+  r+='<div class="platform-result recommended">';
+  r+='<div class="pr-title">Bandwidth Sizing Results<span class="pr-badge">ERLANG-B MODEL</span></div>';
+  var rows=[
+    ['Total Users',users.toLocaleString()],['System BHCA',Math.round(totalBHCA).toLocaleString()],
+    ['Offered Traffic (Erlangs)',erlang.toFixed(2)],['Concurrent Voice Calls',concVoice.toLocaleString()],
+    ['Concurrent External Calls',concExternal.toLocaleString()+' ('+Math.round(extPct*100)+'% external)'],
+    ['Concurrent Video Sessions',concVideo.toLocaleString()],
+    ['Voice Bandwidth Required',voiceBW.toLocaleString()+' kbps (~'+Math.ceil(voiceBW/1000)+' Mbps)'],
+    ['Video Bandwidth Required',concVideo>0?videoBW.toLocaleString()+' kbps':'N/A'],
+    ['Total Bandwidth + '+Math.round((hd-1)*100)+'% Headroom',totalBW.toLocaleString()+' kbps (~'+Math.ceil(totalBW/1000)+' Mbps)'],
+    ['PSTN Trunks Required (Erlang-B P.'+Math.round(gos*100)+')',pstnTrunks+' trunks (BHCA model)'],
+    ['LGW Recommendation',concExternal<=250?'ISR 4331 (reg-based)':concExternal<=500?'ISR 4331 (cert-based)':concExternal<=2000?'C8200 (cert-based)':concExternal<=6500?'C8300/C8500 (cert-based)':'Multiple C8500 or vCUBE cluster'],
+  ];
+  rows.forEach(([k,v])=>{r+='<div class="pr-row"><span>'+k+'</span><span class="pr-val">'+v+'</span></div>';});
+  r+='</div>';
+  r+='<div class="ibox" style="margin-top:10px;"><strong>Note:</strong> This uses simplified Erlang-B (blocked calls cleared) model. The Cisco Sizing Tool uses Erlang-A (blocked calls delayed) which is more conservative for contact centre environments. Always verify with the official <a href="https://www.cisco.com/c/dam/en/us/td/docs/solutions/PA/size/sizing15.pdf" target="_blank">Cisco PA Sizing Tool</a>.</div>';
+  document.getElementById('bw-results').innerHTML=r;
+}
+
+window.onload=function(){sizeCUCM();sizeSME();sizeCUC();sizeIMP();sizeBW();};
+</script>
+</body>
+</html>
